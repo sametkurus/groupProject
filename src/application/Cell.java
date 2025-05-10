@@ -55,78 +55,32 @@ public class Cell {
 		return rectangle;
 	}
 
-	public double getCenterX() {
-		return rectangle.getX() + size / 2;
-	}
-
-	public double getCenterY() {
-		return rectangle.getY() + size / 2;
-	}
 
 	public boolean hasTower() {
 		return tower != null;
 	}
-
-/*
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
-
-public class Cell {
-	private int row,col;
-	private int x,y,width,height;
-	private boolean isPath;
-	private Towers tower;
-	private Rectangle rectangle;
-
-	public Cell(int row, int col, double size, boolean isPath ) {
-		this.row = row;
-		this.col = col;
-		this.width = size;
-		this.height = size;
-		this.x = col * size;
-		this.y = row * size;
-		this.isPath = false;
-
-		// Create visual representation
-		this.rectangle = new Rectangle(x, y, width, height);
-		this.rectangle.setFill(getRandomTowerPlacementColor());
-		this.rectangle.setStroke(Color.WHITE);
+	
+	public void resize(double newSize) {
+	    // Hücrenin boyutunu güncelle
+	    Rectangle rect = getRectangle();
+	    rect.setWidth(newSize);  
+	    rect.setHeight(newSize); 
 	}
 
-	private Color getRandomTowerPlacementColor() {
-		// Two different yellow tones as specified in requirements
-		return Math.random() < 0.5 ? Color.rgb(255, 255, 150) : Color.rgb(255, 255, 180);
+	public void setPosition(double x, double y) {
+	    // Hücrenin pozisyonunu güncelle
+	    Rectangle rect = getRectangle();
+	    rect.setX(x + (rect.getWidth() )); 
+	    rect.setY(y + (rect.getHeight() )); 
 	}
 
-	public boolean contains(double x, double y) {
-		return x >= this.x && x <= this.x + width && 
-				y >= this.y && y <= this.y + height;
+	public double getCenterX() {
+	    Rectangle rect = getRectangle();
+	    return rect.getX() + rect.getWidth() / 2;
 	}
 
-	public void setPath(boolean isPath) {
-		this.isPath = isPath;
-		if (isPath) {
-			rectangle.setFill(Color.GRAY);
-		}
+	public double getCenterY() {
+	    Rectangle rect = getRectangle();
+	    return rect.getY() + rect.getHeight() / 2;
 	}
-
-	public void setTower(Towers tower) {
-		this.tower = tower;
-		tower.setTowerx((int)(x + width / 2));
-		tower.setTowery((int)(y + height / 2));
-	}
-
-	public void removeTower() {
-		this.tower = null;
-	}
-
-	public boolean hasTower() {
-		return tower != null; 
-	}
-	public Towers getTower() { 
-		return tower; 
-	}
-
- */
-
 }

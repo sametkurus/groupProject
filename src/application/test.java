@@ -24,11 +24,13 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 
 public class test extends Application {
 	private Stage stage;
 	private Scene scene;
-	private Pane root;
+	private BorderPane root;
 	private GameMap gameMap;
 	private Player player;
 	private List<Enemy> enemies;
@@ -61,48 +63,24 @@ public class test extends Application {
 		primaryStage.show();
 	}
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
 		Application.launch(args);
 	}
-	
+
 	private void startGame(Stage primaryStage) {
-        root = new Pane();
-        root.setPrefWidth(800);
-        root.setPrefHeight(600);
-        scene = new Scene(root, 800, 600);
-        
-        player = new Player();
-        enemies = new ArrayList<>();
-        waves = new ArrayList<>();
-        
-        Pane mapPane = new Pane();
-        mapPane.setPrefWidth(root.getPrefWidth());
-        mapPane.setPrefHeight(root.getPrefHeight());
-
-        loadLevel(currentLevel);
-        setUI();
-
-        root.getChildren().add(mapPane);
-
-        primaryStage.setScene(scene);
-        primaryStage.setTitle("Tower Defense Game");
-        primaryStage.show();
-        
-        
-    }
-	
-	private void initializeGame() {
-		root = new Pane();
+		root = new BorderPane();
 		scene = new Scene(root, 800, 600);
 
-		// Initialize game objects
 		player = new Player();
 		enemies = new ArrayList<>();
 		waves = new ArrayList<>();
 
 		loadLevel(currentLevel);
+		setUI();
 
-		//		setUI();
+		primaryStage.setScene(scene);
+		primaryStage.setTitle("Tower Defense Game");
+		primaryStage.show();
+
 	}
 
 	private void loadLevel(int level) {
@@ -115,34 +93,323 @@ public class test extends Application {
 		File levelFile = new File("C:\\Users\\Simit\\eclipse-workspace\\TowerDefenceGame\\src\\application\\MapLevel-" + level );
 		TextDecoder decoder = new TextDecoder(levelFile);
 		gameMap = new GameMap(root, decoder);
-		gameMap.initializeFromDecoder();
+
 		// Load waves from decoder
-		//	        loadWavesFromDecoder(decoder);
+		loadWavesFromDecoder(decoder);
 
 		// Reset player for new level (but keep money)
 		player.setLives(5);
 
 		// Start with first wave
-		/*	        if (!waves.isEmpty()) {
-	            currentWave = waves.get(0);
-	            gameRunning = true;
-	        }
-	    }
+		if (!waves.isEmpty()) {
+			currentWave = waves.get(0);
+			gameRunning = true;
+		}
+	}
 
-	 private void loadWavesFromDecoder(TextDecoder decoder) {
-	        int[] enemyCounts = decoder.getEnemyCountPerWave();
-	        double[] spawnDelays = decoder.getEnemySpawnDelayPerWave();
-	        int[] waveDelays = decoder.getDelayToOtherWave();
 
-	        if (enemyCounts != null && spawnDelays != null && waveDelays != null &&
-	            enemyCounts.length == spawnDelays.length && enemyCounts.length == waveDelays.length) {
-	            for (int i = 0; i < enemyCounts.length; i++) {
-	                waves.add(new Wave(enemyCounts[i], spawnDelays[i], (double) waveDelays[i]));
-	            }
-	        } else {
-	            System.err.println("Error: Wave data arrays from decoder have inconsistent lengths or are null.");
-	        }
-	    }
-		 **/
+	private void loadWavesFromDecoder(TextDecoder decoder) {
+		int[] enemyCounts = decoder.getEnemyCountPerWave();
+		double[] spawnDelays = decoder.getEnemySpawnDelayPerWave();
+		int[] waveDelays = decoder.getDelayToOtherWave();
+		for (int i = 0; i < enemyCounts.length; i++) {
+			waves.add(new Wave(enemyCounts[i], spawnDelays[i], (double) waveDelays[i]));
+		}
+
+	}
+
+
+	private void setUI() {
+		Pane mapPane = new Pane();
+		VBox towerPane = new VBox(10);
+		HBox statsPane = new HBox(20);
+
+		// Configure map pane (center area)
+		mapPane.setStyle("-fx-background-color: #222;");
+
+		// Configure tower selection panel (right side)
+		towerPane.setPrefWidth(150);
+		towerPane.setPadding(new javafx.geometry.Insets(15));
+		towerPane.setStyle("-fx-background-color: #333; -fx-padding: 10;");
+
+		// Add tower selection buttons here
+		Button laserTowerBtn = createTowerButton("Laser Tower", 3, 200);
+		Button tripleShotTowerBtn = createTowerButton("Triple Shot Tower", 2, 150);
+		Button singleShotTowerBtn =createTowerButton("Single Shot Tower", 1, 100);
+		Button missileTowerBtn = createTowerButton("Missle Launcher Tower", 4, 300);
+		towerPane.getChildren().addAll(new Label("Towers:"), singleShotTowerBtn ,tripleShotTowerBtn, 
+				missileTowerBtn, laserTowerBtn);
+
+
+		towerPane.setAlignment(javafx.geometry.Pos.TOP_CENTER);
+
+		// Configure stats panel (bottom area)
+		statsPane.setPrefHeight(60);
+		statsPane.setStyle("-fx-background-color: #444; -fx-padding: 10;");
+		statsPane.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
+		// Add player stats display
+		Label moneyLabel = new Label("Money: $" + player.getMoney());
+		moneyLabel.setStyle("-fx-text-fill: white; -fx-font-size: 16;");
+
+		Label livesLabel = new Label("Lives: " + player.getLives());
+		livesLabel.setStyle("-fx-text-fill: white; -fx-font-size: 16;");
+
+		Label waveLabel = new Label("Wave: " + (currentWave != null ? (waves.indexOf(currentWave) + 1) : "0") + 
+				"/" + waves.size());
+		waveLabel.setStyle("-fx-text-fill: white; -fx-font-size: 16;");
+
+		statsPane.getChildren().addAll(moneyLabel, livesLabel, waveLabel);
+
+		// Set up the layout structure with BorderPane
+		root.setCenter(mapPane);
+		root.setRight(towerPane);
+		root.setBottom(statsPane);
+
+		// Make UI components resize with window
+		root.prefWidthProperty().bind(scene.widthProperty());
+		root.prefHeightProperty().bind(scene.heightProperty());
+
+		// Make map pane fill available space
+		mapPane.prefWidthProperty().bind(root.widthProperty().subtract(towerPane.getPrefWidth()));
+		mapPane.prefHeightProperty().bind(root.heightProperty().subtract(statsPane.getPrefHeight()));
+
+		// Make stats pane span full width
+		statsPane.prefWidthProperty().bind(root.widthProperty());
+
+		// Add game map to the map pane
+		if (gameMap != null) {
+			// This assumes your GameMap class adds its visual elements to the provided pane
+			gameMap.addToPane(mapPane);
+		}
+
+		//    setupTowerButtonActions(singleShotTowerBtn, missileTowerBtn, laserTowerBtn, mapPane);
+	}
+
+
+	public Button createTowerButton(String name, int towerType, int cost) {
+		Towers tempTower = new Towers(towerType);
+		javafx.scene.Node tempView = tempTower.getView();
+
+		// Create a snapshot of the tower view
+		javafx.scene.SnapshotParameters params = new javafx.scene.SnapshotParameters();
+		params.setFill(javafx.scene.paint.Color.TRANSPARENT);
+
+		// Create a group to properly position the tower for the snapshot
+		javafx.scene.Group snapshotGroup = new javafx.scene.Group(towerView);
+
+		// Take snapshot of the tower view
+		javafx.scene.image.WritableImage snapshot = snapshotGroup.snapshot(params, null);
+
+		// Create an ImageView with the snapshot
+		javafx.scene.image.ImageView towerImageView = new javafx.scene.image.ImageView(snapshot);
+		towerImageView.setFitHeight(40);
+		towerImageView.setFitWidth(40);
+		towerImageView.setPreserveRatio(true);
+
+		// Create a VBox to hold tower image and cost
+		VBox buttonContent = new VBox(5);
+		buttonContent.setAlignment(javafx.geometry.Pos.CENTER);
+
+		// Create cost label
+		Label costLabel = new Label("" + cost);
+		costLabel.setStyle("-fx-text-fill: gold;");
+
+		// Add image and cost to VBox
+		buttonContent.getChildren().addAll(costLabel);
+
+		// Create the button with the content
+		Button towerButton = new Button();
+		towerButton.setGraphic(buttonContent);
+		towerButton.setContentDisplay(javafx.scene.control.ContentDisplay.TOP);
+		towerButton.setPrefWidth(120);
+		towerButton.setPrefHeight(80);
+		towerButton.setStyle("-fx-background-color: #555; -fx-text-fill: white;");
+
+		// Add hover effect
+		towerButton.setOnMouseEntered(e -> towerButton.setStyle("-fx-background-color: #666; -fx-text-fill: white;"));
+		towerButton.setOnMouseExited(e -> towerButton.setStyle("-fx-background-color: #555; -fx-text-fill: white;"));
+
+		// Store tower type in button's user data for later reference
+		towerButton.setUserData(towerType);
+
+		return towerButton;
+
+	}
+
+
+	// Sets up the tower button actions for dragging and placing towers
+
+	private void setupTowerButtonActions(Button basicTowerBtn, Button missileTowerBtn, Button laserTowerBtn, Pane mapPane) {
+		// Create event handlers for each tower button
+		javafx.event.EventHandler<javafx.scene.input.MouseEvent> towerDragHandler = 
+				new javafx.event.EventHandler<javafx.scene.input.MouseEvent>() {
+			@Override
+			public void handle(javafx.scene.input.MouseEvent event) {
+				Button sourceButton = (Button) event.getSource();
+				int towerType = (int) sourceButton.getUserData();
+
+				// Create a tower to drag
+				selectedTower = new Towers(towerType);
+
+				// Show tower range
+				selectedTower.showRangeIndicator();
+
+				// Add tower view to map pane temporarily
+				mapPane.getChildren().add(selectedTower.getView());
+
+				// Position tower at mouse location
+				selectedTower.setPosition(event.getX(), event.getY());
+
+				// Start dragging
+				isDraggingTower = true;
+			}
+		};
+
+		// Set mouse pressed handler for tower buttons
+		basicTowerBtn.setOnMousePressed(towerDragHandler);
+		missileTowerBtn.setOnMousePressed(towerDragHandler);
+		laserTowerBtn.setOnMousePressed(towerDragHandler);
+
+		// Set up map pane mouse handlers for tower placement
+		mapPane.setOnMouseMoved(e -> {
+			if (isDraggingTower && selectedTower != null) {
+				// Update tower position as mouse moves
+				selectedTower.setPosition(e.getX(), e.getY());
+
+				// Highlight grid cell under mouse if available
+				int col = (int) (e.getX() / (mapPane.getWidth() / gameMap.getWidth()));
+				int row = (int) (e.getY() / (mapPane.getHeight() / gameMap.getHeight()));
+
+				// TODO: Highlight valid/invalid placement locations
+			}
+		});
+
+		mapPane.setOnMouseClicked(e -> {
+			if (isDraggingTower && selectedTower != null) {
+				// Get grid position from mouse coordinates
+				int col = (int) (e.getX() / (mapPane.getWidth() / gameMap.getWidth()));
+				int row = (int) (e.getY() / (mapPane.getHeight() / gameMap.getHeight()));
+
+				// Try to place tower
+				if (player.getMoney() >= selectedTower.getCost()) {
+					if (gameMap.placeTower(selectedTower, row, col)) {
+						// Tower placed successfully, deduct cost
+						player.spendMoney((int) selectedTower.getCost());
+
+						// Hide range display
+						selectedTower.hideRange();
+
+						// Update money display
+						updateUI();
+						// Reset selection
+						isDraggingTower = false;
+						selectedTower = null;
+					}
+				} else {
+					// Not enough money, show message
+					showMessage("Not enough money!", mapPane);
+
+					// Remove temporary tower view
+					mapPane.getChildren().remove(selectedTower.getView());
+
+					// Reset selection
+					isDraggingTower = false;
+					selectedTower = null;
+				}
+			}
+		});
+	}
+
+
+	//	 Shows a temporary message on the map
+
+	private void showMessage(String message, Pane pane) {
+		Label messageLabel = new Label(message);
+		messageLabel.setStyle("-fx-background-color: rgba(0,0,0,0.7); -fx-text-fill: white; -fx-padding: 10px;");
+
+		pane.getChildren().add(messageLabel);
+		messageLabel.setLayoutX(pane.getWidth() / 2 - 50);
+		messageLabel.setLayoutY(pane.getHeight() / 2 - 20);
+
+		// Fade out animation
+		javafx.animation.FadeTransition fadeOut = new javafx.animation.FadeTransition(
+				javafx.util.Duration.millis(1500), messageLabel);
+		fadeOut.setFromValue(1.0);
+		fadeOut.setToValue(0.0);
+		fadeOut.setOnFinished(e -> pane.getChildren().remove(messageLabel));
+		fadeOut.play();
+	}
+
+
+
+	private void updateUI() {
+		// Update money and lives labels
+		Label moneyLabel = (Label) ((Pane) root.getChildren().get(1)).getChildren().get(0);
+		moneyLabel.setText("Money: $" + player.getMoney());
+
+		Label livesLabel = (Label) ((Pane) root.getChildren().get(1)).getChildren().get(1);
+		livesLabel.setText("Lives: " + player.getLives());
+
+		Label waveLabel = (Label) ((Pane) root.getChildren().get(1)).getChildren().get(2);
+		waveLabel.setText("Wave: " + (currentWave != null ? (waves.indexOf(currentWave) + 1) : "0") + 
+				"/" + waves.size());
+	}
+
+	private void gameOver() {
+		gameRunning = false;
+
+		Label gameOverLabel = new Label("GAME OVER");
+		gameOverLabel.setStyle("-fx-font-size: 48; -fx-text-fill: red;");
+		gameOverLabel.setLayoutX(scene.getWidth() / 2 - 100);
+		gameOverLabel.setLayoutY(scene.getHeight() / 2 - 30);
+
+		Button restartButton = new Button("Restart");
+		restartButton.setLayoutX(scene.getWidth() / 2 - 40);
+		restartButton.setLayoutY(scene.getHeight() / 2 + 30);
+		restartButton.setOnAction(e -> {
+			root.getChildren().removeAll(gameOverLabel, restartButton);
+			loadLevel(currentLevel);
+		});
+
+		root.getChildren().addAll(gameOverLabel, restartButton);
+	}
+
+	private void levelComplete() {
+		gameRunning = false;
+
+		if (currentLevel < 5) {
+			Label levelCompleteLabel = new Label("LEVEL " + currentLevel + " COMPLETE!");
+			levelCompleteLabel.setStyle("-fx-font-size: 36; -fx-text-fill: green;");
+			levelCompleteLabel.setLayoutX(scene.getWidth() / 2 - 150);
+			levelCompleteLabel.setLayoutY(scene.getHeight() / 2 - 30);
+
+			Button nextLevelButton = new Button("Next Level");
+			nextLevelButton.setLayoutX(scene.getWidth() / 2 - 50);
+			nextLevelButton.setLayoutY(scene.getHeight() / 2 + 30);
+			nextLevelButton.setOnAction(e -> {
+				root.getChildren().removeAll(levelCompleteLabel, nextLevelButton);
+				currentLevel++;
+				loadLevel(currentLevel);
+			});
+
+			root.getChildren().addAll(levelCompleteLabel, nextLevelButton);
+		} else {
+			Label gameCompleteLabel = new Label("YOU WIN! GAME COMPLETE!");
+			gameCompleteLabel.setStyle("-fx-font-size: 36; -fx-text-fill: gold;");
+			gameCompleteLabel.setLayoutX(scene.getWidth() / 2 - 180);
+			gameCompleteLabel.setLayoutY(scene.getHeight() / 2 - 30);
+
+			Button restartButton = new Button("Play Again");
+			restartButton.setLayoutX(scene.getWidth() / 2 - 50);
+			restartButton.setLayoutY(scene.getHeight() / 2 + 30);
+			restartButton.setOnAction(e -> {
+				root.getChildren().removeAll(gameCompleteLabel, restartButton);
+				currentLevel = 1;
+				loadLevel(currentLevel);
+			});
+
+			root.getChildren().addAll(gameCompleteLabel, restartButton);
+		}
 	}
 }

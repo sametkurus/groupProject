@@ -18,6 +18,7 @@ public class GameMap {
         this.mapPane = mapPane;
         this.decoder = decoder;
         this.towers = new ArrayList<>();
+        
         initializeFromDecoder();
     }
 
@@ -98,7 +99,7 @@ public class GameMap {
         st.setToY(0.90);
         st.play();
     }
-/*
+
     public boolean placeTower(Towers tower, int row, int col) {
         if (row < 0 || row >= height || col < 0 || col >= width) {
             return false;
@@ -128,7 +129,7 @@ public class GameMap {
             }
         }
     }
-**/
+
     public Cell getCell(int row, int col) {
         if (row >= 0 && row < height && col >= 0 && col < width) {
             return grid[row][col];
@@ -151,4 +152,82 @@ public class GameMap {
     public int getHeight() {
         return height;
     }
+
+    public void addToPane(Pane newMapPane) {
+        // Update mapPane reference to the new pane
+        this.mapPane = newMapPane;
+        
+        // Clear any existing content on the map pane
+        mapPane.getChildren().clear();
+        
+        // Re-calculate cell size based on the current pane dimensions
+        double cellSize = calculateCellSize();
+        
+        // If grid hasn't been initialized yet, initialize it first
+        if (grid == null) {
+            initializeFromDecoder();
+            return;
+        }
+        
+        // Add all existing cells to the new pane and resize them
+        for (int row = 0; row < height; row++) {
+            for (int col = 0; col < width; col++) {
+                Cell cell = grid[row][col];
+                
+                // Resize and reposition the cell based on new cell size
+                cell.resize(cellSize);
+                cell.setPosition(col * cellSize, row * cellSize);
+                
+                // Add the cell to the pane
+                mapPane.getChildren().add(cell.getRectangle());
+            }
+        }
+        
+        // Add all existing towers back to the pane
+        for (Towers tower : towers) {
+            mapPane.getChildren().add(tower.getView());
+            
+            // Find the cell containing this tower and update tower position
+            for (int row = 0; row < height; row++) {
+                for (int col = 0; col < width; col++) {
+                    Cell cell = grid[row][col];
+                    if (cell.getTower() == tower) {
+                        tower.setPosition(cell.getCenterX(), cell.getCenterY());
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // Set up a listener to handle pane size changes
+        mapPane.widthProperty().addListener((obs, oldVal, newVal) -> resizeGrid());
+        mapPane.heightProperty().addListener((obs, oldVal, newVal) -> resizeGrid());
+    }
+
+    /**
+     * Resizes the grid to fit the current pane size
+     */
+    private void resizeGrid() {
+        // Calculate new cell size
+        double cellSize = calculateCellSize();
+        
+        // Update all cells
+        for (int row = 0; row < height; row++) {
+            for (int col = 0; col < width; col++) {
+                Cell cell = grid[row][col];
+                cell.resize(cellSize);
+                cell.setPosition(col * cellSize, row * cellSize);
+                
+                // Update position of tower if cell has one
+                if (cell.hasTower()) {
+                    cell.getTower().setPosition(cell.getCenterX(), cell.getCenterY());
+                }
+            }
+        }
+    }
+
+    /**
+     * Recalculates the cell size based on the current pane dimensions
+     */
+  
 }
