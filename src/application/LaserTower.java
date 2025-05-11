@@ -4,34 +4,41 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
-
 import javafx.animation.AnimationTimer;
+import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 
 public class LaserTower extends Towers {
-	 
- public laserBeam currentBeam;
+ public GraphicsContext gc;
  public Enemy currentTarget;
  double lastUpdate = 0;
  double time =0;
  final double Laser_Damage_per_second = 10;
  private Color laserColor = Color.RED;
- ImageView image;
+ Image image;
  private List<Enemy> enemies;
+ private Pane gamePane;
+ Enemy nearest;
  
- public LaserTower(int towerx, int towery) {
+ public LaserTower(int towerx, int towery,Pane pane,GraphicsContext gc) {
 	 super(towerx, towery ,30 , 10 , 1 ,50, null);
-	 this.image =  loadTowerImage(towerx, towery);
+	 this.gamePane= pane;
+	 this.gc= gc;
+	 loadTowerImage();
 	 this.startAnimationTimer();
 
 	 
  }
- public LaserTower(int x, int y,List<Enemy> enemies) {
+ public LaserTower(int x, int y,List<Enemy> enemies,Pane gamePane) {
      super(x, y, 30, 10, 1, 50, new ImageView());
      this.enemies = enemies;
+     this.gamePane= gamePane;
+     loadTowerImage();
      this.startAnimationTimer();
+     
 
 }
 
@@ -58,71 +65,74 @@ public class LaserTower extends Towers {
          time -= deltaTime; // Gerçek zamanlı azaltma
      } else {
          shoot();
+
+     }
+     if (currentTarget != null && currentTarget.isAlive()) {
+         // Sürekli hasar uygula
+         currentTarget.damage(Laser_Damage_per_second * deltaTime);
+
+         drawTower();
+         drawLaserTo(currentTarget);
+     } else {
+         currentTarget = null;
      }
  }
+ private void drawLaserTo(Enemy target) {
+     double centerX = getTowerx() + 20;
+     double centerY = getTowery() + 20;
+
+     gc.setStroke(laserColor);
+     gc.setLineWidth(2);
+     gc.strokeLine(centerX, centerY, target.getX(), target.getY());
+ }
+ private void drawTower() {
+         gc.drawImage(image, getTowerx(), getTowery(), 40, 40);
+     
+ }
  public void shoot() {
-	 double centerX = image.getX() + image.getFitWidth() / 2;
-     double centerY = image.getY() + image.getFitHeight() / 2;
+	 double centerX = getTowerx() + 20;
+     double centerY = getTowery() + 20;
 
      // Geçerli hedefi kontrol et
      if ((currentTarget != null) && (!currentTarget.isAlive())) {
          currentTarget = null;
-         if (currentBeam != null) {
+        /* if (currentBeam != null) {
              //gamePane.getChildren().remove(currentBeam.image);
             // projectiles.remove(currentBeam);
-             currentBeam = null;
+             currentBeam = null;*/
          }
-     }
+     
 
      if (currentTarget == null) {
          // Yeni hedef ara
-         Enemy nearest = null;
-         double minDist = range;
+    	 if (currentTarget != null && !currentTarget.isAlive()) {
+             currentTarget = null;
+         }
 
-         for (Enemy e : enemies) {
-             if (!e.isAlive()) continue;
-             double deltax = e.getX() - centerX;
-             double deltay = e.getY() - centerY;
-             double distance = Math.hypot(deltax, deltay);
-             if (distance <= range && distance < minDist) {
-                 minDist = distance;
-                 nearest = e;
+         if (currentTarget == null) {
+             Enemy nearest = closestEnemy(enemies);
+             if (nearest != null) {
+                 currentTarget = nearest;
              }
          }
-     
-         if (nearest != null) {
-         currentTarget = nearest;
-         ImageView beamView = new ImageView();  // isteğe göre lazer efekti resmi yüklenebilir
 
-         laserBeam Beam = new laserBeam (centerX,centerY,nearest.getX(),nearest.getY(), damage , 0,Laser_Damage_per_second, this ,beamView);
-         Beam.createImage();                 
-         //gamePane.getChildren().add(beamView);
-         //projectiles.add(beam);
-
-         currentBeam = Beam;
-     }
-         if (currentTarget != null && currentBeam != null) {
-             currentBeam.targetX = currentTarget.getX();
-             currentBeam.targetY = currentTarget.getY();
+         if (currentTarget != null) {
+             time = 1.0 / attackSpeed;
          }
      }
-     time = 1.00/attackSpeed; 
   
  }
  //currentTarget.takeDamage(beamDamagePerSecond * deltaSeconds);
- public  ImageView loadTowerImage(int x, int y) {
-
-	 ImageView towerView = new ImageView();
-	 try {
-         Image towerImage = new Image(new FileInputStream("Game/singleshot.png"));
-         towerView.setImage(towerImage);
-         towerView.setFitWidth(40);
-         towerView.setFitHeight(40);
-         towerView.setX(x);
-         towerView.setY(y);
+ private void loadTowerImage() {
+     try {
+         image = new Image(new FileInputStream("Game/singleshot.png"));
      } catch (FileNotFoundException e) {
-         System.err.println("Image file not found: " + e.getMessage());
+         System.err.println("Tower image not found: " + e.getMessage());
      }
-	 return towerView;
+ 
  }
+ public void setEnemies(List<Enemy> enemies) {
+	    this.enemies = enemies;
+	}
+
 }

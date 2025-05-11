@@ -3,46 +3,66 @@ package application;
 import javafx.scene.image.ImageView;
 
 public abstract class Projectile {
-	 double  bulletX ;
+	 double bulletX ;
 	 double bulletY;
-	 double targetX;
-	 double targetY;
+	 Enemy enemy;
 	 double distance;
 	 
 	 int damage;
 	 int speed;
 	 Towers tower ;
 	 ImageView image;
-	public Projectile(double bulletx, double bullety, double targetx, double targety, int damage, int speed,
+	public Projectile(double bulletx, double bullety, Enemy enemy, int damage, int speed,
 			Towers tower, ImageView image) {
 		this.bulletX = bulletx;
 		this.bulletY = bullety;
-		this.targetX = targetx;
-		this.targetY = targety;
+		this.enemy=enemy;
 		this.damage = damage;
 		this.speed = speed;
 		this.tower = tower;
 		this.image = image;
 	}
 	
-	public void  update(double passedTime) {
-		moving(passedTime);
-		
+	protected void moving(double passedTime) {
+	    // Düşmanın gelecekteki pozisyonunu tahmin et
+	    double[] futurePosition = predictFuturePosition(enemy);
+	    double futureX = futurePosition[0];
+	    double futureY = futurePosition[1];
+
+	    // Hedefe olan yön vektörü
+	    double dx = futureX - bulletX;
+	    double dy = futureY - bulletY;
+	    double distance = Math.sqrt(dx * dx + dy * dy);
+
+	    if (distance > 0) {
+	        double directionX = dx / distance;
+	        double directionY = dy / distance;
+
+	        // Mermiyi ilerlet
+	        bulletX += directionX * speed * passedTime;
+	        bulletY += directionY * speed * passedTime;
+
+	        // ImageView konumunu güncelle
+	        image.setX(bulletX);
+	        image.setY(bulletY);
+	    }
 	}
 
-    protected void moving(double passedTime) {
-        double distance = Math.sqrt(Math.pow(targetX - bulletX, 2) + Math.pow(targetY - bulletY, 2));
-        if (distance > 0) {
-            double cosx = (targetX - bulletX) / distance;
-            double cosy = (targetY - bulletY) / distance;
-            bulletX += cosx * speed * passedTime;
-            bulletY += cosy * speed * passedTime;
-        }
-    }
-    public boolean hasReachedTarget() {
-        return distance < 3;
-    }
-	public abstract void collision (Enemy enemy) ;
+
+    
+	public  double[] predictFuturePosition(Enemy enemy) {
+
+	    double dx = enemy.getX() - bulletX;
+	    double dy = enemy.getY() - bulletY;
+	    double distance = Math.sqrt(dx * dx + dy * dy);
+	    double timeToReach = distance / speed;
+
+	    double futureX = enemy.getX() + enemy.speed* timeToReach;
+	    double futureY = enemy.getY() + enemy.speed * timeToReach;
+
+	    return new double[]{futureX, futureY};
+	}
+
 	public abstract void createImage();
 
 	public double getBulletX() {

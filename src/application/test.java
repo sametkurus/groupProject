@@ -5,6 +5,7 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.animation.TranslateTransition;
 import javafx.application.Application;
+import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -76,7 +77,11 @@ public class test extends Application {
 
 		loadLevel(currentLevel);
 		setUI();
-
+		
+		startGameLoop();
+		
+		startWaveTimer();
+		
 		primaryStage.setScene(scene);
 		primaryStage.setTitle("Tower Defense Game");
 		primaryStage.show();
@@ -183,43 +188,44 @@ public class test extends Application {
 			gameMap.addToPane(mapPane);
 		}
 
-		//    setupTowerButtonActions(singleShotTowerBtn, missileTowerBtn, laserTowerBtn, mapPane);
+		setupTowerButtonActions(singleShotTowerBtn, missileTowerBtn, laserTowerBtn, tripleShotTowerBtn, mapPane);
 	}
 
 
 	public Button createTowerButton(String name, int towerType, int cost) {
-		Towers tempTower = new Towers(towerType);
-		javafx.scene.Node tempView = tempTower.getView();
+		Rectangle towerView = new Rectangle(30, 30);
 
-		// Create a snapshot of the tower view
-		javafx.scene.SnapshotParameters params = new javafx.scene.SnapshotParameters();
-		params.setFill(javafx.scene.paint.Color.TRANSPARENT);
+		// Set color based on tower type
+		switch (towerType) {
+		case 1: // Single Shot Tower
+			towerView.setFill(Color.BLUE);
+			break;
+		case 2: // Laser Tower
+			towerView.setFill(Color.RED);
+			break;
+		case 3: // Triple Shot Tower
+			towerView.setFill(Color.GREEN);
+			break;
+		case 4: // Missile Launcher Tower
+			towerView.setFill(Color.ORANGE);
+			break;
+		}
 
-		// Create a group to properly position the tower for the snapshot
-		javafx.scene.Group snapshotGroup = new javafx.scene.Group(towerView);
-
-		// Take snapshot of the tower view
-		javafx.scene.image.WritableImage snapshot = snapshotGroup.snapshot(params, null);
-
-		// Create an ImageView with the snapshot
-		javafx.scene.image.ImageView towerImageView = new javafx.scene.image.ImageView(snapshot);
-		towerImageView.setFitHeight(40);
-		towerImageView.setFitWidth(40);
-		towerImageView.setPreserveRatio(true);
+		// Create a snapshot group for the tower view
+		Group snapshotGroup = new Group(towerView);
 
 		// Create a VBox to hold tower image and cost
 		VBox buttonContent = new VBox(5);
-		buttonContent.setAlignment(javafx.geometry.Pos.CENTER);
+		buttonContent.setAlignment(Pos.CENTER);
+		buttonContent.getChildren().addAll(snapshotGroup);
 
 		// Create cost label
-		Label costLabel = new Label("" + cost);
+		Label costLabel = new Label("$" + cost);
 		costLabel.setStyle("-fx-text-fill: gold;");
-
-		// Add image and cost to VBox
-		buttonContent.getChildren().addAll(costLabel);
+		buttonContent.getChildren().add(costLabel);
 
 		// Create the button with the content
-		Button towerButton = new Button();
+		Button towerButton = new Button(name);
 		towerButton.setGraphic(buttonContent);
 		towerButton.setContentDisplay(javafx.scene.control.ContentDisplay.TOP);
 		towerButton.setPrefWidth(120);
@@ -230,8 +236,8 @@ public class test extends Application {
 		towerButton.setOnMouseEntered(e -> towerButton.setStyle("-fx-background-color: #666; -fx-text-fill: white;"));
 		towerButton.setOnMouseExited(e -> towerButton.setStyle("-fx-background-color: #555; -fx-text-fill: white;"));
 
-		// Store tower type in button's user data for later reference
-		towerButton.setUserData(towerType);
+		// Store tower type and cost in button's user data for later reference
+		towerButton.setUserData(new int[]{towerType, cost});
 
 		return towerButton;
 
@@ -239,86 +245,114 @@ public class test extends Application {
 
 
 	// Sets up the tower button actions for dragging and placing towers
-
-	private void setupTowerButtonActions(Button basicTowerBtn, Button missileTowerBtn, Button laserTowerBtn, Pane mapPane) {
+	private void setupTowerButtonActions(Button singleShotTowerBtn, Button tripleShotTowerBtn, 
+			Button laserTowerBtn, Button missileTowerBtn, Pane mapPane) {
 		// Create event handlers for each tower button
 		javafx.event.EventHandler<javafx.scene.input.MouseEvent> towerDragHandler = 
-				new javafx.event.EventHandler<javafx.scene.input.MouseEvent>() {
-			@Override
-			public void handle(javafx.scene.input.MouseEvent event) {
-				Button sourceButton = (Button) event.getSource();
-				int towerType = (int) sourceButton.getUserData();
+				event -> {
+					Button sourceButton = (Button) event.getSource();
+					int[] userData = (int[]) sourceButton.getUserData();
+					int towerType = userData[0];
+					int towerCost = userData[1];
 
-				// Create a tower to drag
-				selectedTower = new Towers(towerType);
+					// Check if player has enough money first
+					if (player.getMoney() < towerCost) {
+						showMessage("Not enough money! Need $" + towerCost, mapPane);
+						return;
+					}
 
-				// Show tower range
-				selectedTower.showRangeIndicator();
+					// Create a tower to drag
+					selectedTower = new Towers(towerType);
+					selectedTower.setPrice(towerCost);
 
-				// Add tower view to map pane temporarily
-				mapPane.getChildren().add(selectedTower.getView());
+					// Show tower range
+					selectedTower.showRangeIndicator();
 
-				// Position tower at mouse location
-				selectedTower.setPosition(event.getX(), event.getY());
+					// Add tower view to map pane temporarily
+					mapPane.getChildren().add(selectedTower.getView());
 
-				// Start dragging
-				isDraggingTower = true;
-			}
-		};
+					// Position tower at mouse location
+					selectedTower.setPosition(event.getSceneX() - root.getRight().getLayoutBounds().getWidth(), 
+							event.getSceneY() - root.getBottom().getLayoutBounds().getHeight());
 
-		// Set mouse pressed handler for tower buttons
-		basicTowerBtn.setOnMousePressed(towerDragHandler);
-		missileTowerBtn.setOnMousePressed(towerDragHandler);
-		laserTowerBtn.setOnMousePressed(towerDragHandler);
+					// Start dragging
+					isDraggingTower = true;
+				};
 
-		// Set up map pane mouse handlers for tower placement
-		mapPane.setOnMouseMoved(e -> {
-			if (isDraggingTower && selectedTower != null) {
-				// Update tower position as mouse moves
-				selectedTower.setPosition(e.getX(), e.getY());
+				// Set mouse pressed handler for tower buttons
+				singleShotTowerBtn.setOnMousePressed(towerDragHandler);
+				tripleShotTowerBtn.setOnMousePressed(towerDragHandler);
+				laserTowerBtn.setOnMousePressed(towerDragHandler);
+				missileTowerBtn.setOnMousePressed(towerDragHandler);
 
-				// Highlight grid cell under mouse if available
-				int col = (int) (e.getX() / (mapPane.getWidth() / gameMap.getWidth()));
-				int row = (int) (e.getY() / (mapPane.getHeight() / gameMap.getHeight()));
+				// Set up map pane mouse handlers for tower placement
+				mapPane.setOnMouseMoved(e -> {
+					if (isDraggingTower && selectedTower != null) {
+						// Update tower position as mouse moves
+						selectedTower.setPosition(e.getX(), e.getY());
 
-				// TODO: Highlight valid/invalid placement locations
-			}
-		});
+						// Calculate grid position
+						int col = (int) (e.getX() / gameMap.getWidth());
+						int row = (int) (e.getY() / gameMap.getHeight());
 
-		mapPane.setOnMouseClicked(e -> {
-			if (isDraggingTower && selectedTower != null) {
-				// Get grid position from mouse coordinates
-				int col = (int) (e.getX() / (mapPane.getWidth() / gameMap.getWidth()));
-				int row = (int) (e.getY() / (mapPane.getHeight() / gameMap.getHeight()));
+						// Check if placement is valid and highlight accordingly
+						boolean validPlacement = gameMap.isValidPlacement(row, col);
+						selectedTower.setValidPlacement(validPlacement);
+					}
+				});
 
-				// Try to place tower
-				if (player.getMoney() >= selectedTower.getCost()) {
-					if (gameMap.placeTower(selectedTower, row, col)) {
-						// Tower placed successfully, deduct cost
-						player.spendMoney((int) selectedTower.getCost());
+				mapPane.setOnMouseClicked(e -> {
+					if (isDraggingTower && selectedTower != null) {
+						// Get grid position from mouse coordinates
+						int col = (int) (e.getX() / gameMap.getWidth());
+						int row = (int) (e.getY() / gameMap.getHeight());
 
-						// Hide range display
-						selectedTower.hideRange();
+						// Try to place tower
+						if (gameMap.isValidPlacement(row, col)) {
+							if (player.getMoney() >= selectedTower.getPrice()) {
+								gameMap.placeTower(selectedTower, row, col);
 
-						// Update money display
-						updateUI();
-						// Reset selection
+								// Tower placed successfully, deduct cost
+								player.spendMoney(selectedTower.getPrice());
+
+								// Hide range display but keep it for functional range calculation
+								selectedTower.hideRangeIndicator();
+
+								// Add tower to game map's tower list for targeting and shooting
+								gameMap.addTower(selectedTower);
+
+								// Update money display
+								updateUI();
+							} else {
+								// Not enough money, show message
+								showMessage("Not enough money!", mapPane);
+
+								// Remove temporary tower view
+								mapPane.getChildren().remove(selectedTower.getView());
+							}
+						} else {
+							// Invalid placement, show message
+							showMessage("Invalid placement!", mapPane);
+
+							// Remove temporary tower view
+							mapPane.getChildren().remove(selectedTower.getView());
+						}
+
+						// Reset selection state
 						isDraggingTower = false;
 						selectedTower = null;
 					}
-				} else {
-					// Not enough money, show message
-					showMessage("Not enough money!", mapPane);
+				});
 
-					// Remove temporary tower view
-					mapPane.getChildren().remove(selectedTower.getView());
-
-					// Reset selection
-					isDraggingTower = false;
-					selectedTower = null;
-				}
-			}
-		});
+				// Add handler for canceling tower placement with right click
+				mapPane.setOnMouseReleased(e -> {
+					if (e.isSecondaryButtonDown() && isDraggingTower && selectedTower != null) {
+						// Cancel tower placement
+						mapPane.getChildren().remove(selectedTower.getView());
+						isDraggingTower = false;
+						selectedTower = null;
+					}
+				});
 	}
 
 

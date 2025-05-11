@@ -226,8 +226,55 @@ public class GameMap {
         }
     }
 
+    public void addTower(Towers tower) {
+        if (!towers.contains(tower)) {
+            towers.add(tower);
+        }
+    }
+    
     /**
-     * Recalculates the cell size based on the current pane dimensions
+     * Checks if a placement is valid for a tower
+     * Required by test class for tower placement
      */
+    public boolean isValidPlacement(int row, int col) {
+        if (row < 0 || row >= height || col < 0 || col >= width) {
+            return false;
+        }
+        
+        Cell cell = grid[row][col];
+        return !cell.isPath() && !cell.hasTower();
+    }
+    
+    /**
+     * Returns the start cell of the path
+     * Required for enemy spawn point
+     */
+    public Cell getStartCell() {
+        if (path != null && !path.isEmpty()) {
+            return path.get(0);
+        }
+        return null;
+    }
+    
+    /**
+     * Returns the end cell of the path
+     * Required for enemy destination
+     */
+    public Cell getEndCell() {
+        if (path != null && !path.isEmpty()) {
+            return path.get(path.size() - 1);
+        }
+        return null;
+    }
+    
+    /**
+     * Process a game tick for all towers
+     * Called by game loop to update tower targeting and shooting
+     */
+    public void update(List<Enemy> enemies) {
+        for (Towers tower : towers) {
+            tower.closestEnemy(enemies);
+        }
+    }
   
 }

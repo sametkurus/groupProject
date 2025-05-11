@@ -1,7 +1,6 @@
 package application;
 
 import java.util.List;
-
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
@@ -10,18 +9,24 @@ import javafx.scene.shape.Circle;
 public abstract  class Towers {
 	private double towerx ;
 	private double towery ;
-	private javafx.scene.Node view;
 	double range ;
 	int damage;
 	double  attackSpeed;
-	private int price;
+	private double price;
+	private javafx.scene.Node view;
 	Enemy target;
 	double time ;
 	Circle rangeIndicator;
 
-	ImageView towerImage = new ImageView();
-	
-	public Towers(int towerx, int towery, int range, int damage, double attackSpeed, int price, ImageView tower) {
+	private ImageView towerImage = new ImageView();
+
+	public Towers(int towerType) {
+		switch towerType {
+		case 1: 
+		}
+	}
+
+	public Towers(int towerx, int towery, int range, int damage, double attackSpeed, double price, ImageView tower) {
 		this.towerx = towerx;
 		this.towery = towery;
 		this.range = range;
@@ -30,10 +35,11 @@ public abstract  class Towers {
 		this.price = price;
 		this.towerImage = tower;
 
+
 		rangeIndicator = new Circle(range);
 		rangeIndicator.setCenterX(towerx + towerImage.getFitWidth() / 2);
 		rangeIndicator.setCenterY(towery + towerImage.getFitHeight() / 2);
-		rangeIndicator.setStroke(Color.RED);
+		rangeIndicator.setStroke(Color.BLACK);
 		rangeIndicator.setFill(Color.TRANSPARENT);
 	}
 
@@ -83,52 +89,55 @@ public abstract  class Towers {
 		}
 	}
 
-	public abstract  ImageView loadTowerImage(int x , int y);
+	//public abstract  ImageView loadTowerImage(int x , int y);
 	public abstract void shoot() ;
 
 
 	public double getTowerx() {
 		return towerx;
 	}
-	public void setTowerx(double towerx) {
+	public void setTowerx(int towerx) {
 		this.towerx = towerx;
 	}
 	public double getTowery() {
 		return towery;
 	}
-	public void setTowery(double towery) {
+	public void setTowery(int towery) {
 		this.towery = towery;
 	}
-	public int getPrice() {
+	public double getPrice() {
 		return price;
 	}
-	public void setPrice(int price) {
+	public void setPrice(double price) {
 		this.price = price;
 	}
-	
-	
-	//Updates by Samet
-	 public javafx.scene.Node getView() {
-	        return view;
-	    }
-	 
+	public javafx.scene.Node getView() {
+		return view;
+	}
+
 	public void setPosition(double x, double y) {
-        this.towerx = x;
-        this.towery = y;
-        
-        // Update the view position
-        if (view instanceof javafx.scene.shape.Shape) {
-            ((javafx.scene.shape.Shape) view).setTranslateX(x);
-            ((javafx.scene.shape.Shape) view).setTranslateY(y);
-        } else if (view instanceof javafx.scene.Group) {
-            ((javafx.scene.Group) view).setTranslateX(x);
-            ((javafx.scene.Group) view).setTranslateY(y);
-        }
-        
-        // Update range circle position
-        if (rangeIndicator != null) {
-        	rangeIndicator.setCenterX(x);
-        	rangeIndicator.setCenterY(y);
-        }
-    }
+		this.towerx = x;
+		this.towery = y;
+
+		// Update the view position
+		if (view instanceof javafx.scene.shape.Shape) {
+			((javafx.scene.shape.Shape) view).setTranslateX(x);
+			((javafx.scene.shape.Shape) view).setTranslateY(y);
+		} else if (view instanceof javafx.scene.Group) {
+			((javafx.scene.Group) view).setTranslateX(x);
+			((javafx.scene.Group) view).setTranslateY(y);
+		}
+
+		// Update range circle position
+		if (rangeIndicator != null) {
+			rangeIndicator.setCenterX(x);
+			rangeIndicator.setCenterY(y);
+		}
+
+	}
+	public ImageView getImage() {
+		return this.towerImage;
+	}
+
+
 }

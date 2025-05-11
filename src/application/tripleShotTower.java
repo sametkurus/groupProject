@@ -8,6 +8,7 @@ import java.util.List;
 import javafx.animation.AnimationTimer;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.Pane;
 
 public class tripleShotTower extends Towers {
 	public double lastUpdate;
@@ -17,15 +18,20 @@ public class tripleShotTower extends Towers {
     private final int Bullet_Count = 3;
     private List<Enemy> enemies;
     ImageView image;
+    Pane gamePane;
     
-    public tripleShotTower(int towerx, int towery) {
+    private List<bullet> bullets = new ArrayList<>();
+    
+    public tripleShotTower(int towerx, int towery,Pane gamepane) {
    	 super(towerx, towery ,30 , 10 , 1 ,50,null);
+   	 this.gamePane= gamePane;
    	 this.image =  loadTowerImage(towerx, towery);
    	 this.startAnimationTimer();
     }
-    public tripleShotTower(int x, int y,List<Enemy> enemies) {
+    public tripleShotTower(int x, int y,List<Enemy> enemies,Pane gamePane) {
         super(x, y, 30, 10, 1, 50, new ImageView());
         this.enemies = enemies;
+        this.gamePane= gamePane;
         this.image =  loadTowerImage(towerx, towery);
         this.startAnimationTimer();
     }
@@ -52,7 +58,21 @@ public class tripleShotTower extends Towers {
 	     } else {
 	         shoot();
 	     }
+	     updateBullets(deltaTime);
 	 }
+    private void updateBullets(double deltaTime) {
+        // Mermileri güncelle
+        for (int i = 0; i < bullets.size(); i++) {
+            bullet currentBullet = bullets.get(i);
+            currentBullet.update(deltaTime, gamePane);  // Bullet'ın hareketini güncelle
+
+            // Çarpışma kontrolü ve öldüğünde listeyi temizle
+            if (!currentBullet.isActive()) {
+                bullets.remove(i);
+                i--;  // Listeyi yeniden düzenlemek için i'yi azaltıyoruz
+            }
+        }
+    }
     
    public void shoot()
    {if (time <= 0) {
@@ -74,11 +94,12 @@ public class tripleShotTower extends Towers {
                bulletView.setY(centerY);
 
                // Mermi nesnesi
-               bullet Bullet = new bullet(centerX,centerY,enemy.getX(),enemy.getY() ,damage , 5, this ,bulletView);
+               bullet Bullet = new bullet(centerX,centerY,enemy ,damage , 5, this ,bulletView);
                Bullet.createImage();
+               bullets.add(Bullet); 
 
-               // Sahneye eklenmeli ve oyunun logic sistemine dahil edilmeli
-               // gamePane.getChildren().add(bulletView);
+               
+               gamePane.getChildren().add(bulletView);
                // projectiles.add(newBullet);
                
            } catch (FileNotFoundException e) {

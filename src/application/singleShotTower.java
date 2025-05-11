@@ -1,4 +1,6 @@
 package application;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -6,44 +8,59 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
 import javafx.animation.AnimationTimer;
+import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+
+
 public class singleShotTower extends Towers {
  private double time =0;
  private List<Enemy> enemies;
- ImageView image;
+ private ImageView towerView;
  long lastUpdate;
+ double deltaTime;
+ Pane pane ;
+
+
  
- public singleShotTower(int towerx, int towery) {
+ private List<bullet> bullets = new ArrayList<>();
+ 
+ public singleShotTower(int towerx, int towery,Pane pane) {
 	 super(towerx, towery ,30 , 10 , 1 ,50, null);
-	 this.image =  loadTowerImage(towerx, towery);
-	 
+	 this.pane= pane;
+	 this.towerView = loadTowerImage(towerx, towery);
+	 this.pane.getChildren().add(towerView);
+	
 	 
  }
 
  
- public singleShotTower(int towerx, int towery,List<Enemy> enemies) {
+ public singleShotTower(int towerx, int towery,List<Enemy> enemies,Pane pane) {
      super(towerx, towery, 30, 10, 1, 50, new ImageView());
      this.enemies = enemies;
-     this.image =  loadTowerImage(towerx, towery);
+     this.pane= pane;
+     this.towerView = loadTowerImage(towerx, towery);
+     this.pane.getChildren().add(towerView);
      startAnimationTimer();
     
  }
- public  ImageView loadTowerImage(int x, int y) {
-	 ImageView towerView = new ImageView();
-	 try {
+
+ private ImageView loadTowerImage(int x, int y) {
+     ImageView view = new ImageView();
+     try {
          Image towerImage = new Image(new FileInputStream("Game/singleshot.png"));
-         towerView.setImage(towerImage);
-         towerView.setFitWidth(40);
-         towerView.setFitHeight(40);
-         towerView.setX(x);
-         towerView.setY(y);
+         view.setImage(towerImage);
+         view.setFitWidth(40);
+         view.setFitHeight(40);
+         view.setX(x);
+         view.setY(y);
      } catch (FileNotFoundException e) {
-         System.err.println("Image file not found: " + e.getMessage());
+         System.err.println("Tower image not found: " + e.getMessage());
      }
-	 return towerView;
+     return view;
  }
+ 
  private void startAnimationTimer() {
      new AnimationTimer() {
          @Override
@@ -53,7 +70,7 @@ public class singleShotTower extends Towers {
                  lastUpdate = now;
                  return;
              }
-             double deltaTime = (now - lastUpdate) / 1e9; // Nano -> saniye
+             deltaTime = (now - lastUpdate) / 1e9; // Nano -> saniye
              lastUpdate = now;
 
              // Zamanı güncelle
@@ -63,13 +80,14 @@ public class singleShotTower extends Towers {
  }
 
  private void update(double deltaTime) {
+	
      if (time > 0) {
          time -= deltaTime; // Gerçek zamanlı azaltma
      } else {
          shoot();
      }
+     updateBullets(deltaTime);
  }
-
  public void shoot() {
 	 // 1. Zaman sayacını azalt
      // 2. Menzil süresi dolduysa (time<=0) ateş et
@@ -78,17 +96,10 @@ public class singleShotTower extends Towers {
          double minDist = range;
 
          // 3. En yakın düşmanı, tower merkezine uzaklığına göre bul
-         double centerX = image.getX() + image.getFitWidth() / 2;
-         double centerY = image.getY() + image.getFitHeight() / 2;
-         for (Enemy e : enemies) {
-             double deltax = e.getX() - centerX;
-             double deltay = e.getY() - centerY;
-             double distance = Math.sqrt(deltax*deltax+ deltay*deltay);
-             if (distance <= range && distance < minDist) {
-                 minDist = distance;
-                 nearest = e;
-             }
-         }
+         double centerX = getTowerx() + 20;
+         double centerY = getTowery() + 20;
+         nearest = closestEnemy(enemies);
+         
 
          // 4. Eğer menzilde bir hedef varsa, mermi oluşturup ekle
          if (nearest != null) {
@@ -102,10 +113,12 @@ public class singleShotTower extends Towers {
                  bulletView.setY(centerY);
 
                  // bullet nesnesi
-                 bullet Bullet = new bullet(centerX,centerY,nearest.getX(),nearest.getY() ,damage , 5, this ,bulletView);
-                 Bullet.createImage();                    // varsa ekstra init için
-                    // sahneye ekle
-                    // mantığa ekle
+                 bullet Bullet = new bullet(centerX,centerY,nearest ,damage , 5, this ,bulletView);
+                 bullets.add(Bullet);  // Mermiyi listeye ekle
+                 Bullet.createImage();
+                 pane.getChildren().add(bulletView);
+                    
+             
 
                  // zaman sayacını yeniden yükle
                  time = 1.00/attackSpeed; 
@@ -115,11 +128,25 @@ public class singleShotTower extends Towers {
          }
      }
  }
+ private void updateBullets(double deltaTime) {
+     // Mermileri güncelle
+     for (int i = 0; i < bullets.size(); i++) {
+         bullet currentBullet = bullets.get(i);
+         currentBullet.update(deltaTime, pane);  // Bullet'ın hareketini güncelle
+
+         // Çarpışma kontrolü ve öldüğünde listeyi temizle
+         if (!currentBullet.isActive()) {
+             bullets.remove(i);
+             i--;  // Listeyi yeniden düzenlemek için i'yi azaltıyoruz
+         }
+     }
+ }
+ 
+
  public void setEnemies(List<Enemy> enemies) {
 	    this.enemies = enemies;
 	}
  }
- 
  
 
 
