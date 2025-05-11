@@ -17,17 +17,27 @@ import javafx.scene.shape.Rectangle;
 public class singleShotTower extends Towers {
  private double time =0;
  private List<Enemy> enemies;
- private ImageView towerView;
+   ImageView towerView;
  long lastUpdate;
  double deltaTime;
  Pane pane ;
 
 
- 
- private List<bullet> bullets = new ArrayList<>();
+
+
+
+ public singleShotTower() throws FileNotFoundException {
+	 super();
+     towerView = new ImageView(new Image(new FileInputStream("C:\\Users\\Simit\\eclipse-workspace\\TowerDefenceGame\\src\\resources\\singleShotTowerImage.png")));
+ }
+
+
+
+
+private List<bullet> bullets = new ArrayList<>();
  
  public singleShotTower(int towerx, int towery,Pane pane) {
-	 super(towerx, towery ,30 , 10 , 1 ,50, null);
+	 super(towerx, towery ,30 , 10 , 1 ,50);
 	 this.pane= pane;
 	 this.towerView = loadTowerImage(towerx, towery);
 	 this.pane.getChildren().add(towerView);
@@ -37,7 +47,7 @@ public class singleShotTower extends Towers {
 
  
  public singleShotTower(int towerx, int towery,List<Enemy> enemies,Pane pane) {
-     super(towerx, towery, 30, 10, 1, 50, new ImageView());
+     super(towerx, towery, 30, 10, 1, 50);
      this.enemies = enemies;
      this.pane= pane;
      this.towerView = loadTowerImage(towerx, towery);
@@ -45,11 +55,13 @@ public class singleShotTower extends Towers {
      startAnimationTimer();
     
  }
+ 
+ 
 
- private ImageView loadTowerImage(int x, int y) {
+ public ImageView loadTowerImage(int x, int y) {
      ImageView view = new ImageView();
      try {
-         Image towerImage = new Image(new FileInputStream("Game/singleshot.png"));
+         Image towerImage = new Image(new FileInputStream("C:\\Users\\Simit\\eclipse-workspace\\TowerDefenceGame\\src\\resources\\singleShotTowerImage.png"));
          view.setImage(towerImage);
          view.setFitWidth(40);
          view.setFitHeight(40);
@@ -105,7 +117,7 @@ public class singleShotTower extends Towers {
          if (nearest != null) {
              try {
                  // Mermi resmi
-                 Image bulletImg = new Image(new FileInputStream("Game/bullet.png"));
+                 Image bulletImg = new Image(new FileInputStream("C:\\Users\\Simit\\eclipse-workspace\\TowerDefenceGame\\src\\resources\\bullet4.png"));
                  ImageView bulletView = new ImageView(bulletImg);
                  bulletView.setFitWidth(10);
                  bulletView.setFitHeight(10);
@@ -141,12 +153,25 @@ public class singleShotTower extends Towers {
          }
      }
  }
+ @Override
+ public ImageView getImageView() {
+     return towerView;
+ }
  
 
  public void setEnemies(List<Enemy> enemies) {
 	    this.enemies = enemies;
 	}
+
+
+
+
+
+public void setTowerView(ImageView towerView) {
+	this.towerView = towerView;
+}
  }
+
  
 
 

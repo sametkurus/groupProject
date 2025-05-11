@@ -1,31 +1,25 @@
 package application;
-
-//Bir düşman dalgasının bilgilerini tutar
+// Wave sınıfına spawnedEnemies özelliği ekleyin
+// (Kodda Wave sınıfının tam tanımını görmediğimden dolayı bunu varsayarak ekliyorum)
 public class Wave {
+	private int enemyCount;
+	private double timeBetweenEnemies;
+	private double delayBeforeStart;
+	private int spawnedEnemies = 0;  // Yeni eklenen özellik
 
-	private int enemyCount;     // Dalga başına kaç düşman üretilecek
-	private double spawnDelay;  // Her düşman arasında kaç saniye olacak
-	private double startDelay;  // Dalgadan önce kaç saniye beklenmeli
-
-	// Kurucu metot - wave bilgilerini alır ve kaydeder
-	public Wave(int enemyCount, double spawnDelay, double startDelay) {
+	public Wave(int enemyCount, double timeBetweenEnemies, double delayBeforeStart) {
 		this.enemyCount = enemyCount;
-		this.spawnDelay = spawnDelay;
-		this.startDelay = startDelay;
+		this.timeBetweenEnemies = timeBetweenEnemies;
+		this.delayBeforeStart = delayBeforeStart;
 	}
 
-	// Düşman sayısını döndürür
-	public int getEnemyCount() {
-		return enemyCount;
-	}
+	// Diğer get/set metodları
+	public int getEnemyCount() { return enemyCount; }
+	public double getTimeBetweenEnemies() { return timeBetweenEnemies; }
+	public double getDelayBeforeStart() { return delayBeforeStart; }
 
-	// Düşmanlar arası süreyi döndürür
-	public double getSpawnDelay() {
-		return spawnDelay;
-	}
-
-	// Dalgadan önceki bekleme süresi
-	public double getStartDelay() {
-		return startDelay;
-	}
+	// Yeni eklenen metodlar
+	public int getSpawnedEnemies() { return spawnedEnemies; }
+	public void incrementSpawnedEnemies() { spawnedEnemies++; }
+	public void resetSpawnedEnemies() { spawnedEnemies = 0; }
 }

@@ -23,8 +23,11 @@ public class LaserTower extends Towers {
  private Pane gamePane;
  Enemy nearest;
  
- public LaserTower(int towerx, int towery,Pane pane,GraphicsContext gc) {
-	 super(towerx, towery ,30 , 10 , 1 ,50, null);
+ public LaserTower() {
+	super();
+}
+public LaserTower(int towerx, int towery,Pane pane,GraphicsContext gc) {
+	 super(towerx, towery ,30 , 10 , 1 ,50);
 	 this.gamePane= pane;
 	 this.gc= gc;
 	 loadTowerImage();
@@ -33,7 +36,7 @@ public class LaserTower extends Towers {
 	 
  }
  public LaserTower(int x, int y,List<Enemy> enemies,Pane gamePane) {
-     super(x, y, 30, 10, 1, 50, new ImageView());
+     super(x, y, 30, 10, 1, 50);
      this.enemies = enemies;
      this.gamePane= gamePane;
      loadTowerImage();
@@ -69,7 +72,7 @@ public class LaserTower extends Towers {
      }
      if (currentTarget != null && currentTarget.isAlive()) {
          // Sürekli hasar uygula
-         currentTarget.damage(Laser_Damage_per_second * deltaTime);
+         currentTarget.takeDamage((int)(Laser_Damage_per_second * deltaTime));
 
          drawTower();
          drawLaserTo(currentTarget);
@@ -96,10 +99,6 @@ public class LaserTower extends Towers {
      // Geçerli hedefi kontrol et
      if ((currentTarget != null) && (!currentTarget.isAlive())) {
          currentTarget = null;
-        /* if (currentBeam != null) {
-             //gamePane.getChildren().remove(currentBeam.image);
-            // projectiles.remove(currentBeam);
-             currentBeam = null;*/
          }
      
 
@@ -125,7 +124,7 @@ public class LaserTower extends Towers {
  //currentTarget.takeDamage(beamDamagePerSecond * deltaSeconds);
  private void loadTowerImage() {
      try {
-         image = new Image(new FileInputStream("Game/singleshot.png"));
+         image = new Image(new FileInputStream("C:\\Users\\Simit\\eclipse-workspace\\TowerDefenceGame\\src\\resources\\laserTowerImage.png"));
      } catch (FileNotFoundException e) {
          System.err.println("Tower image not found: " + e.getMessage());
      }
@@ -134,5 +133,34 @@ public class LaserTower extends Towers {
  public void setEnemies(List<Enemy> enemies) {
 	    this.enemies = enemies;
 	}
+ @Override
+ public ImageView getImageView() {
+	 ImageView view = new ImageView();
+	 try {
+	 Image towerImage = new Image(new FileInputStream("C:\\Users\\Simit\\eclipse-workspace\\TowerDefenceGame\\src\\resources\\laserTowerImage.png"));
+     view.setImage(towerImage);
+	 }
+	 catch (FileNotFoundException e) {
+         System.err.println("Tower image not found: " + e.getMessage());
+     }
+     return view;
+ }
+@Override
+public ImageView loadTowerImage(int x, int y) {
+	ImageView view = new ImageView();
+    try {
+        Image towerImage = new Image(new FileInputStream("C:\\Users\\Simit\\eclipse-workspace\\TowerDefenceGame\\src\\resources\\laserTowerImage.png"));
+        view.setImage(towerImage);
+        view.setFitWidth(40);
+        view.setFitHeight(40);
+        view.setX(x);
+        view.setY(y);
+    } catch (FileNotFoundException e) {
+        System.err.println("Tower image not found: " + e.getMessage());
+    }
+    return view;
+}
+ 
 
 }
+

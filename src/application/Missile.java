@@ -33,7 +33,7 @@ public class Missile extends Projectile {
             double dy = enemy.getY() - bulletY;
             double distance = Math.sqrt(dx * dx + dy * dy);
             if (distance <= explosionRadius && enemy.isAlive()) {
-                enemy.damage(explosionDamage);
+                enemy.takeDamage(explosionDamage);
             }
 
         }

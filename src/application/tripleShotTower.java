@@ -22,14 +22,21 @@ public class tripleShotTower extends Towers {
     
     private List<bullet> bullets = new ArrayList<>();
     
+    
+    tripleShotTower() throws FileNotFoundException {
+   	 super();
+   	 this.image = new ImageView();
+   	 Image towerImage = new Image(new FileInputStream("C:\\Users\\Simit\\eclipse-workspace\\TowerDefenceGame\\src\\resources\\tripleShotTowerImage.png"));
+     image.setImage(towerImage);
+   }
     public tripleShotTower(int towerx, int towery,Pane gamepane) {
-   	 super(towerx, towery ,30 , 10 , 1 ,50,null);
+   	 super(towerx, towery ,30 , 10 , 1 ,50);
    	 this.gamePane= gamePane;
    	 this.image =  loadTowerImage(towerx, towery);
    	 this.startAnimationTimer();
     }
     public tripleShotTower(int x, int y,List<Enemy> enemies,Pane gamePane) {
-        super(x, y, 30, 10, 1, 50, new ImageView());
+        super(x, y, 30, 10, 1, 50);
         this.enemies = enemies;
         this.gamePane= gamePane;
         this.image =  loadTowerImage(towerx, towery);
@@ -86,7 +93,7 @@ public class tripleShotTower extends Towers {
        for (Enemy enemy : targets) {
            try {
                // Görsel
-               Image bulletImage = new Image(new FileInputStream("Game/bullet.png"));
+               Image bulletImage = new Image(new FileInputStream("C:\\Users\\Simit\\eclipse-workspace\\TowerDefenceGame\\src\\resources\\bullet4.png"));
                ImageView bulletView = new ImageView(bulletImage);
                bulletView.setFitWidth(10);
                bulletView.setFitHeight(10);
@@ -114,7 +121,7 @@ public class tripleShotTower extends Towers {
    public  ImageView loadTowerImage(int x, int y) {
 		 ImageView towerView = new ImageView();
 		 try {
-	         Image towerImage = new Image(new FileInputStream("Game/singleshot.png"));
+	         Image towerImage = new Image(new FileInputStream("C:\\Users\\Simit\\eclipse-workspace\\TowerDefenceGame\\src\\resources\\tripleShotTowerImage.png"));
 	         towerView.setImage(towerImage);
 	         towerView.setFitWidth(40);
 	         towerView.setFitHeight(40);
@@ -151,4 +158,8 @@ public class tripleShotTower extends Towers {
     }
     return closestEnemies;
 }
+  @Override
+  public ImageView getImageView() {
+      return image;
+  }
 }

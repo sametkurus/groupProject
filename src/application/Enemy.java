@@ -18,7 +18,7 @@ public class Enemy extends Group {
     private double x, y;               // Düşmanın ekrandaki konumu
     private int health;               // Mevcut can değeri
     private double speed;             // Hareket hızı
-    private ArrayList<Cell> path;         // İzlenecek yol
+    private List<Cell> path;         // İzlenecek yol
     private int stepIndex;            // Yol üzerindeki geçilen adım
     private boolean isAlive;          // Düşman canlı mı?
 
@@ -32,7 +32,7 @@ public class Enemy extends Group {
     
     //  Düşman oluşturulurken yol bilgisi verilir ve şekiller tanımlanır.
      
-    public Enemy(ArrayList<Cell> path, Player player) {
+    public Enemy(List<Cell> path, Player player) {
         this.path = path;
         Cell startingCell = path.getFirst();
         this.x = startingCell.getCenterX();
@@ -141,7 +141,13 @@ public class Enemy extends Group {
     public boolean isAlive() {
         return isAlive;
     }
-
+    
+    public double getSpeed () {
+    	return this.speed;
+    }
+    public int getStepIndex () {
+    	return this.stepIndex;
+    }
     public double getX() { return x; }
     public double getY() { return y; }
 }

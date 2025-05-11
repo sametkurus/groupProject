@@ -27,7 +27,7 @@ public class bullet extends Projectile{
 
 	        if (distance < 15) {  // Çarpışma mesafesi
 	            // Düşmana hasar ver
-	            enemy.damage(getDamage());
+	            enemy.takeDamage(getDamage());
 
 	            // Mermi sahneden kaldırılır
 	            pane.getChildren().remove(image);

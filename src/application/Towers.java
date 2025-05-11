@@ -12,28 +12,27 @@ public abstract  class Towers {
 	double range ;
 	int damage;
 	double  attackSpeed;
-	private double price;
+	private int price;
 	private javafx.scene.Node view;
 	Enemy target;
 	double time ;
 	Circle rangeIndicator;
 
-	private ImageView towerImage = new ImageView();
-
-	public Towers(int towerType) {
-		switch towerType {
-		case 1: 
-		}
+	private  ImageView towerImage = new ImageView();
+	
+	public Towers() {
+		
 	}
 
-	public Towers(int towerx, int towery, int range, int damage, double attackSpeed, double price, ImageView tower) {
+
+	public Towers(int towerx, int towery, int range, int damage, double attackSpeed, int price) {
 		this.towerx = towerx;
 		this.towery = towery;
 		this.range = range;
 		this.damage = damage;
 		this.attackSpeed = attackSpeed;
 		this.price = price;
-		this.towerImage = tower;
+		
 
 
 		rangeIndicator = new Circle(range);
@@ -88,9 +87,17 @@ public abstract  class Towers {
 			layer.getChildren().add(rangeIndicator);
 		}
 	}
+	public void hideRangeIndicator(Pane layer) {
+	    if (rangeIndicator != null && layer.getChildren().contains(rangeIndicator)) {
+	        layer.getChildren().remove(rangeIndicator);
+	    }
+	}
 
-	//public abstract  ImageView loadTowerImage(int x , int y);
+	public abstract  ImageView loadTowerImage(int x , int y);
 	public abstract void shoot() ;
+	public abstract ImageView getImageView();
+	
+
 
 
 	public double getTowerx() {
@@ -105,10 +112,10 @@ public abstract  class Towers {
 	public void setTowery(int towery) {
 		this.towery = towery;
 	}
-	public double getPrice() {
+	public int getPrice() {
 		return price;
 	}
-	public void setPrice(double price) {
+	public void setPrice(int price) {
 		this.price = price;
 	}
 	public javafx.scene.Node getView() {
@@ -135,9 +142,5 @@ public abstract  class Towers {
 		}
 
 	}
-	public ImageView getImage() {
-		return this.towerImage;
-	}
-
 
 }

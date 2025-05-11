@@ -17,21 +17,21 @@ public class WaveManager {
 	private boolean waveActive = false; // Dalga şu anda aktif mi?
 
 	private List<Enemy> activeEnemies;  // Sahnedeki canlı düşmanlar
-	private ArrayList<Cell> path;       // Düşmanların izleyeceği yol
+	private List<Cell> path;       // Düşmanların izleyeceği yol
 	private Player player;
 
 
 	/**
 	 * Kurucu: Dalgaları, düşman listesini ve path bilgisini alır.
 	 */
-	public WaveManager(List<Wave> waves, List<Enemy> activeEnemies, ArrayList<Cell> path ,Player player) {
+	public WaveManager(List<Wave> waves, List<Enemy> activeEnemies, List<Cell> path ,Player player) {
 		this.waves = waves;
 		this.activeEnemies = activeEnemies;
 		this.path = path;
 		this.player = player;
 
 		// İlk dalganın başlaması için bekleme süresi
-		this.waveStartTimer = waves.get(0).getStartDelay();
+		this.waveStartTimer = waves.get(0).getDelayBeforeStart();
 	}
 
 	/**
@@ -59,7 +59,7 @@ public class WaveManager {
 			if (spawnTimer <= 0 && enemiesSpawned < currentWave.getEnemyCount()) {
 				spawnEnemy(); // düşman oluştur
 				enemiesSpawned++;
-				spawnTimer = currentWave.getSpawnDelay(); // sıradaki için bekleme süresi
+				spawnTimer = currentWave.getTimeBetweenEnemies(); // sıradaki için bekleme süresi
 			}
 
 			// Dalganın tüm düşmanları üretildiyse bir sonraki dalgaya hazırlan
@@ -70,7 +70,7 @@ public class WaveManager {
 
 				// Eğer hâlâ dalga kaldıysa yeni bekleme süresini ayarla
 				if (currentWaveIndex < waves.size()) {
-					waveStartTimer = waves.get(currentWaveIndex).getStartDelay();
+					waveStartTimer = waves.get(currentWaveIndex).getDelayBeforeStart();
 				}
 			}
 		}

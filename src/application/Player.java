@@ -110,6 +110,9 @@ public class Player {
 		this.totalEnemiesDefeated = 0;
 	}
 
+	public void setMoney(int amount) {
+		this.money = amount;
+	}
 
 	//     Fully resets player including score
 	public void fullReset() {

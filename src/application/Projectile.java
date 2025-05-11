@@ -57,8 +57,8 @@ public abstract class Projectile {
 	    double distance = Math.sqrt(dx * dx + dy * dy);
 	    double timeToReach = distance / speed;
 
-	    double futureX = enemy.getX() + enemy.speed* timeToReach;
-	    double futureY = enemy.getY() + enemy.speed * timeToReach;
+	    double futureX = enemy.getX() + enemy.getSpeed()* timeToReach;
+	    double futureY = enemy.getY() + enemy.getSpeed() * timeToReach;
 
 	    return new double[]{futureX, futureY};
 	}

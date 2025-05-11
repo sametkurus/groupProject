@@ -10,6 +10,7 @@ import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -20,6 +21,7 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.time.Duration;
@@ -41,11 +43,15 @@ public class test extends Application {
 	private AnimationTimer waveTimer;
 	private int currentLevel = 1;
 	private boolean gameRunning = false;
+	private WaveManager waveManager;
+	private Label waveTimerLabel;
+	private long waveStartTime;
+	private boolean isWaveActive = false;
 
 	// Tower selection UI
 	private Towers selectedTower;
 	private boolean isDraggingTower = false;
-
+	private ImageView towerView;
 	@Override
 	public void start(Stage primaryStage) {
 		Text title = new Text("Tower Defense Game");
@@ -77,11 +83,12 @@ public class test extends Application {
 
 		loadLevel(currentLevel);
 		setUI();
-		
+
+		waveManager = new WaveManager(waves, enemies, gameMap.getPath(), player);
 		startGameLoop();
-		
+
 		startWaveTimer();
-		
+
 		primaryStage.setScene(scene);
 		primaryStage.setTitle("Tower Defense Game");
 		primaryStage.show();
@@ -142,8 +149,12 @@ public class test extends Application {
 		Button tripleShotTowerBtn = createTowerButton("Triple Shot Tower", 2, 150);
 		Button singleShotTowerBtn =createTowerButton("Single Shot Tower", 1, 100);
 		Button missileTowerBtn = createTowerButton("Missle Launcher Tower", 4, 300);
-		towerPane.getChildren().addAll(new Label("Towers:"), singleShotTowerBtn ,tripleShotTowerBtn, 
-				missileTowerBtn, laserTowerBtn);
+		towerPane.getChildren().addAll(
+				new Label("Towers:"), 
+				singleShotTowerBtn ,
+				tripleShotTowerBtn, 
+				missileTowerBtn, 
+				laserTowerBtn);
 
 
 		towerPane.setAlignment(javafx.geometry.Pos.TOP_CENTER);
@@ -163,6 +174,10 @@ public class test extends Application {
 		Label waveLabel = new Label("Wave: " + (currentWave != null ? (waves.indexOf(currentWave) + 1) : "0") + 
 				"/" + waves.size());
 		waveLabel.setStyle("-fx-text-fill: white; -fx-font-size: 16;");
+
+		waveTimerLabel = new Label("Next Wave: Waiting...");
+		waveTimerLabel.setStyle("-fx-text-fill: white; -fx-font-size: 16;");
+		statsPane.getChildren().add(waveTimerLabel);
 
 		statsPane.getChildren().addAll(moneyLabel, livesLabel, waveLabel);
 
@@ -192,22 +207,27 @@ public class test extends Application {
 	}
 
 
-	public Button createTowerButton(String name, int towerType, int cost) {
-		Rectangle towerView = new Rectangle(30, 30);
+	public Button createTowerButton(String name, int towerType, int cost) throws FileNotFoundException{
+
 
 		// Set color based on tower type
+		// Create a tower to drag
 		switch (towerType) {
 		case 1: // Single Shot Tower
-			towerView.setFill(Color.BLUE);
+			selectedTower = new singleShotTower();
+			towerView = selectedTower.getImageView();
 			break;
 		case 2: // Laser Tower
-			towerView.setFill(Color.RED);
+			selectedTower = new LaserTower();
+			towerView = selectedTower.getImageView();
 			break;
 		case 3: // Triple Shot Tower
-			towerView.setFill(Color.GREEN);
+			selectedTower = new tripleShotTower();
+			towerView = selectedTower.getImageView();
 			break;
 		case 4: // Missile Launcher Tower
-			towerView.setFill(Color.ORANGE);
+			selectedTower = new missileLauncherTower();
+			towerView = selectedTower.getImageView();
 			break;
 		}
 
@@ -262,11 +282,24 @@ public class test extends Application {
 					}
 
 					// Create a tower to drag
-					selectedTower = new Towers(towerType);
+					switch (towerType) {
+					case 1: // Single Shot Tower
+						selectedTower = new singleShotTower();
+						break;
+					case 2: // Laser Tower
+						selectedTower = new LaserTower();
+						break;
+					case 3: // Triple Shot Tower
+						selectedTower = new tripleShotTower();
+						break;
+					case 4: // Missile Launcher Tower
+						selectedTower = new missileLauncherTower();
+						break;
+					}
 					selectedTower.setPrice(towerCost);
 
 					// Show tower range
-					selectedTower.showRangeIndicator();
+					selectedTower.showRangeIndicator(root);
 
 					// Add tower view to map pane temporarily
 					mapPane.getChildren().add(selectedTower.getView());
@@ -316,7 +349,7 @@ public class test extends Application {
 								player.spendMoney(selectedTower.getPrice());
 
 								// Hide range display but keep it for functional range calculation
-								selectedTower.hideRangeIndicator();
+								selectedTower.hideRangeIndicator(root);
 
 								// Add tower to game map's tower list for targeting and shooting
 								gameMap.addTower(selectedTower);
@@ -355,6 +388,86 @@ public class test extends Application {
 				});
 	}
 
+	// Wave timer'ı başlatan metot
+	 private void startWaveTimer() {
+	        waveStartTime = System.nanoTime();
+	        isWaveActive = false;
+
+	        waveTimer = new AnimationTimer() {
+	            @Override
+	            public void handle(long now) {
+	                if (!gameRunning) return;
+
+	                waveManager.update((now - waveStartTime) / 1_000_000_000.0); // Use WaveManager to update
+
+	                if (waveManager.allWavesCompleted() && enemies.isEmpty()) {
+	                    levelComplete();
+	                }
+
+	                updateUI();
+	            }
+	        };
+	        waveTimer.start();
+	    }
+
+
+	private void spawnEnemy() {
+		Cell startCell = gameMap.getStartCell();
+		if (startCell != null) {
+			ArrayList<Cell> pathCells = new ArrayList<>(gameMap.getPath());
+			Enemy enemy = new Enemy(pathCells, player);
+			enemies.add(enemy);
+
+			// Düşmanı haritaya ekle
+			Pane mapPane = (Pane) root.getCenter();
+			mapPane.getChildren().add(enemy);
+		}
+	}
+
+
+	// Oyun döngüsünü başlatan metot - düşmanların hareketi ve kulelerin ateş etmesi için
+	private void startGameLoop() {
+		gameLoop = new AnimationTimer() {
+			@Override
+			public void handle(long now) {
+				if (!gameRunning) return;
+
+				// Düşmanları hareket ettir
+				List<Enemy> deadEnemies = new ArrayList<>();
+				for (Enemy enemy : enemies) {
+					enemy.step();
+
+					// Düşman öldü mü?
+					if (!enemy.isAlive()) {
+						deadEnemies.add(enemy);
+						player.addMoney(10); // Düşman öldürme ödülü
+					}
+
+					// Düşman bitiş çizgisine ulaştı mı?
+					if (!enemy.isAlive() && enemy.getStepIndex() >= gameMap.getPath().size() - 1) {
+						player.loseLife();
+						if (player.getLives() <= 0) {
+							gameOver();
+						}
+					}
+				}
+
+				// Ölü düşmanları listeden kaldır
+				for (Enemy enemy : deadEnemies) {
+					Pane mapPane = (Pane) root.getCenter();
+					mapPane.getChildren().remove(enemy);
+					enemies.remove(enemy);
+				}
+
+				// Kuleleri güncelle (düşmanları hedefle ve ateş et)
+				gameMap.update(enemies);
+
+				// UI'ı güncelle
+				updateUI();
+			}
+		};
+		gameLoop.start();
+	}
 
 	//	 Shows a temporary message on the map
 
@@ -388,6 +501,29 @@ public class test extends Application {
 		Label waveLabel = (Label) ((Pane) root.getChildren().get(1)).getChildren().get(2);
 		waveLabel.setText("Wave: " + (currentWave != null ? (waves.indexOf(currentWave) + 1) : "0") + 
 				"/" + waves.size());
+
+		if (currentWave != null) {
+			if (!isWaveActive && waves.indexOf(currentWave) == 0) {
+				waveTimerLabel.setText("First Wave Starting...");
+			} else if (!isWaveActive) {
+				// Wave başlamadan önceki süreyi göster
+				long currentTime = System.nanoTime();
+				double remainingTime = currentWave.getDelayBeforeStart() - 
+						((currentTime - waveStartTime) / 1_000_000_000.0);
+
+				if (remainingTime > 0) {
+					waveTimerLabel.setText(String.format("Next Wave: %.1fs", remainingTime));
+				} else {
+					waveTimerLabel.setText("Wave In Progress");
+					isWaveActive = true;
+				}
+			} else {
+				// Wave aktifse progress göster
+				int totalEnemies = currentWave.getEnemyCount();
+				int killedEnemies = currentWave.getSpawnedEnemies() - enemies.size();
+				waveTimerLabel.setText(String.format("Enemies: %d/%d", killedEnemies, totalEnemies));
+			}
+		}
 	}
 
 	private void gameOver() {
