@@ -52,7 +52,7 @@ public class Game extends Application{
 	private Wave currentWave;
 	private AnimationTimer gameLoop;
 	private AnimationTimer waveTimer;
-	private int currentLevel = 1;
+	private int currentLevel = 5;
 	private boolean gameRunning = false;
 	private Canvas gameCanvas;
 	private GraphicsContext gc;
@@ -79,7 +79,8 @@ public class Game extends Application{
 
 	public void start(Stage primaryStage) {
 		Text title = new Text("Tower Defense Game");
-		title.setStyle("-fx-font-size: 48px; -fx-font-weight: bold; -fx-fill: linear-gradient(from 0% 0% to 100% 200%, repeat, #ff8a00 0%, #ff2b6d 50%);");
+		title.setStyle("-fx-font-size: 48px; -fx-font-weight: bold; -fx-fill: linear-gradient(from 0% 0% to 100% 200%,"
+				+ " repeat, #ff8a00 0%, #ff2b6d 50%);");
 
 		// Apply glow effect to title
 		Glow glow = new Glow();
@@ -88,9 +89,12 @@ public class Game extends Application{
 
 		// Create start button with hover effect
 		Button startButton = new Button("Start Game");
-		startButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 18px; -fx-padding: 15 30; -fx-background-radius: 5;");
-		startButton.setOnMouseEntered(e -> startButton.setStyle("-fx-background-color: #3e8e41; -fx-text-fill: white; -fx-font-size: 18px; -fx-padding: 15 30; -fx-background-radius: 5;"));
-		startButton.setOnMouseExited(e -> startButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 18px; -fx-padding: 15 30; -fx-background-radius: 5;"));
+		startButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 18px; -fx-padding:"
+				+ " 15 30; -fx-background-radius: 5;");
+		startButton.setOnMouseEntered(e -> startButton.setStyle("-fx-background-color: #3e8e41; -fx-text-fill: white;"
+				+ " -fx-font-size: 18px; -fx-padding: 15 30; -fx-background-radius: 5;"));
+		startButton.setOnMouseExited(e -> startButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white;"
+				+ " -fx-font-size: 18px; -fx-padding: 15 30; -fx-background-radius: 5;"));
 		startButton.setOnAction(e -> {
 			try {
 				startGame(primaryStage);
@@ -101,14 +105,18 @@ public class Game extends Application{
 
 		// Exit button
 		Button exitButton = new Button("Exit");
-		exitButton.setStyle("-fx-background-color: #f44336; -fx-text-fill: white; -fx-font-size: 18px; -fx-padding: 15 30; -fx-background-radius: 5;");
-		exitButton.setOnMouseEntered(e -> exitButton.setStyle("-fx-background-color: #da190b; -fx-text-fill: white; -fx-font-size: 18px; -fx-padding: 15 30; -fx-background-radius: 5;"));
-		exitButton.setOnMouseExited(e -> exitButton.setStyle("-fx-background-color: #f44336; -fx-text-fill: white; -fx-font-size: 18px; -fx-padding: 15 30; -fx-background-radius: 5;"));
+		exitButton.setStyle("-fx-background-color: #f44336; -fx-text-fill: white; -fx-font-size: 18px; -fx-padding:"
+				+ " 15 30; -fx-background-radius: 5;");
+		exitButton.setOnMouseEntered(e -> exitButton.setStyle("-fx-background-color: #da190b; -fx-text-fill: white;"
+				+ " -fx-font-size: 18px; -fx-padding: 15 30; -fx-background-radius: 5;"));
+		exitButton.setOnMouseExited(e -> exitButton.setStyle("-fx-background-color: #f44336; -fx-text-fill: white;"
+				+ " -fx-font-size: 18px; -fx-padding: 15 30; -fx-background-radius: 5;"));
 		exitButton.setOnAction(e -> System.exit(0));
 
 		// Layout
 		VBox layout = new VBox(50);
-		layout.setStyle("-fx-alignment: center; -fx-padding: 40; -fx-background-color: linear-gradient(from 0% 0% to 100% 100%, #121212, #2c3e50);");
+		layout.setStyle("-fx-alignment: center; -fx-padding: 40; -fx-background-color: linear-gradient(from 0% 0% to "
+				+ "100% 100%, #121212, #2c3e50);");
 		layout.getChildren().addAll(title, startButton,  exitButton);
 
 		// Add a simple animation to the title
@@ -163,7 +171,8 @@ public class Game extends Application{
 		waves.clear();
 
 		// Load map
-		File levelFile = new File("C:\\Users\\Simit\\eclipse-workspace\\TowerDefenceGame\\src\\application\\MapLevel-" + currentLevel );
+		File levelFile = new File("C:\\Users\\Simit\\eclipse-workspace\\TowerDefenceGame\\src\\application\\MapLevel-" 
+		+ currentLevel );
 		TextDecoder decoder = new TextDecoder(levelFile);
 		gameMap = new GameMap(root, decoder);
 
@@ -260,138 +269,106 @@ public class Game extends Application{
 			gameMap.addToPane(mapPane);
 		}
 
-		setupTowerButtonActions(singleShotTowerBtn, missileTowerBtn, laserTowerBtn, tripleShotTowerBtn, mapPane);
+		setupEventHandler(singleShotTowerBtn, mapPane);
+		setupEventHandler(laserTowerBtn, mapPane);
+		setupEventHandler(tripleShotTowerBtn, mapPane);
+		setupEventHandler(missileTowerBtn, mapPane);
 	}
 
+	private void setupEventHandler(Button towerButton, Pane mapPane) throws FileNotFoundException{
+	    towerButton.setOnMousePressed(event -> {
+	        int[] towerInfo = (int[]) towerButton.getUserData();
+	        int towerType = towerInfo[0];
+	        int cost = towerInfo[1];
 
-	private void setupTowerButtonActions(Button singleShotTowerBtn, Button missileTowerBtn, 
-			Button laserTowerBtn, Button tripleShotTowerBtn, 
-			Pane mapPane) throws FileNotFoundException {
+	        if (player.getMoney() < cost) {
+	            showMessage("Not enough money!", mapPane);
+	            return;
+	        }
 
-		// 1. Tower seçim handler'ı
-		javafx.event.EventHandler<javafx.scene.input.MouseEvent> towerSelectHandler = event -> {
-			try {
-				Button sourceButton = (Button) event.getSource();
-				int[] userData = (int[]) sourceButton.getUserData();
-				int towerType = userData[0];
-				int towerCost = userData[1];
-
-				// Para kontrolü
-				if (player.getMoney() < towerCost) {
-					showMessage("Not enough money! Need $" + towerCost, mapPane);
-					return;
-				}
-
-				System.out.println("Creating tower type: " + towerType);
-
-				// Tower oluşturma - try-catch bloklarını ayrı ayrı kullanarak hata noktasını tespit edelim
-				try {
-					switch (towerType) {
-					case 1: 
-						System.out.println("Creating SingleShotTower");
-						selectedTower = new singleShotTower(); 
-						break;
-					case 2: 
-						System.out.println("Creating LaserTower");
-						selectedTower = new LaserTower(); 
-						break;
-					case 3: 
-						System.out.println("Creating TripleShotTower");
-						selectedTower = new tripleShotTower(); 
-						break;
-					case 4: 
-						System.out.println("Creating MissileLauncherTower");
-						selectedTower = new missileLauncherTower(); 
-						break;
-					}
-				} catch (Exception e) {
+	        // Kule nesnesi oluştur
+	        switch (towerType) {
+	            case 1: 
+					selectedTower = new singleShotTower(,,root);
+				
+	            break;
+	            case 2: selectedTower = new LaserTower(); 
+	            break;
+	            case 3: try {
+					selectedTower = new tripleShotTower();
+				} catch (FileNotFoundException e) {
+					// TODO Auto-generated catch block
 					e.printStackTrace();
-					showMessage("Error creating tower: " + e.getMessage(), mapPane);
-					return;
-				}
-
-				System.out.println("Tower created: " + selectedTower);
-
-				// Fiyatı ayarla
-				selectedTower.setPrice(towerCost);
-
-				// View'ı kontrol et ve debug bilgisi yazdır
-				System.out.println("Tower view: " + selectedTower.getView());
-
-				if (selectedTower.getView() == null) {
-					System.err.println("Tower view is null! Creating a placeholder...");
-
-					// View null ise, geçici bir placeholder gösterge oluşturalım
-					javafx.scene.shape.Circle placeholder = new javafx.scene.shape.Circle(15);
-					placeholder.setFill(javafx.scene.paint.Color.RED);
-					placeholder.setOpacity(0.7);
-
-					// Burası Tower sınıfının yapısına bağlı olarak değişmesi gerekebilir
-					// Bu sadece bir workaround; gerçek çözüm Tower sınıfının düzeltilmesi olmalı
-					try {
-						java.lang.reflect.Field viewField = selectedTower.getClass().getDeclaredField("view");
-						viewField.setAccessible(true);
-						viewField.set(selectedTower, placeholder);
-					} catch (Exception e) {
-						System.err.println("Could not set placeholder view: " + e.getMessage());
-						showMessage("Tower view could not be created!", mapPane);
-						return;
-					}
-				}
-
-				// Range göstergesi ekle - try-catch içinde
-				try {
-					System.out.println("Showing range indicator");
-					selectedTower.showRangeIndicator(mapPane);
-					System.out.println("Range indicator shown");
-				} catch (Exception e) {
-					System.err.println("Error showing range indicator: " + e.getMessage());
+				} 
+	            break;
+	            case 4: try {
+					selectedTower = new missileLauncherTower();
+				} catch (FileNotFoundException e) {
+					// TODO Auto-generated catch block
 					e.printStackTrace();
-					// Hataya rağmen devam et
-				}
+				} 
+	            break;
+	        }
 
-				// Tower'ı mapPane'e ekle
-				try {
-					System.out.println("Adding tower view to mapPane");
-					mapPane.getChildren().add(selectedTower.getView());
-					System.out.println("Tower view added");
-				} catch (Exception e) {
-					System.err.println("Error adding tower view: " + e.getMessage());
-					e.printStackTrace();
-					showMessage("Could not add tower to the map!", mapPane);
-					return;
-				}
+	        towerView = selectedTower.getImageView();
+	        towerView.setFitWidth(50);
+	        towerView.setFitHeight(50);
+	        towerView.setOpacity(0.7); // Drag sırasında yarı saydam
 
-				// Başlangıç pozisyonu (mouse konumuna)
-				try {
-					System.out.println("Setting tower position");
-					selectedTower.setPosition(event.getX(), event.getY());
-					System.out.println("Tower position set");
-				} catch (Exception e) {
-					System.err.println("Error setting tower position: " + e.getMessage());
-					e.printStackTrace();
-					// Hataya rağmen devam et
-				}
+	        // Menzil gösterimi (range indicator)
+	        rangeIndicator = new Circle(selectedTower.getRange());
+	        rangeIndicator.setStroke(Color.RED);
+	        rangeIndicator.setFill(Color.rgb(255, 0, 0, 0.2));
+	        rangeIndicator.setVisible(true);
 
-				isDraggingTower = true;
-				System.out.println("Tower dragging started");
+	        Group dragGroup = new Group(rangeIndicator, towerView);
+	        mapPane.getChildren().add(dragGroup);
 
-			} catch (Exception e) {
-				e.printStackTrace();
-				showMessage("Error in tower selection: " + e.getMessage(), mapPane);
-			}
-		};
+	        // Harita üzerinde mouse hareketi ile kulesi sürükle
+	        mapPane.setOnMouseMoved(e -> {
+	            double mouseX = e.getX();
+	            double mouseY = e.getY();
 
-		// Geri kalan kod aynı kalabilir...
-		// Butonlara handler'ları ata
-		singleShotTowerBtn.setOnMousePressed(towerSelectHandler);
-		tripleShotTowerBtn.setOnMousePressed(towerSelectHandler);
-		laserTowerBtn.setOnMousePressed(towerSelectHandler);
-		missileTowerBtn.setOnMousePressed(towerSelectHandler);
+	            dragGroup.setLayoutX(mouseX - 25);
+	            dragGroup.setLayoutY(mouseY - 25);
 
-		// Tower sürükleme ve yerleştirme kodları...
-		// (Önceki koddan kalan aynı kısımlar)
+	            rangeIndicator.setLayoutX(25);
+	            rangeIndicator.setLayoutY(25);
+	        });
+
+	        mapPane.setOnMouseClicked(e -> {
+	            double mouseX = e.getX();
+	            double mouseY = e.getY();
+
+	            int row = (int) (mouseY / gameMap.getCellSize());
+	            int col = (int) (mouseX / gameMap.getCellSize());
+
+	            if (gameMap.isValidPlacement(row, col)) {
+	                if (player.getMoney() >= cost) {
+	                    boolean placed = gameMap.placeTower(selectedTower, row, col);
+	                    if (placed) {
+	                        player.setMoney(player.getMoney() - cost);
+	                        updateUI();
+	                        showMessage("Tower placed!", mapPane);
+	                    } else {
+	                        showMessage("Placement failed!", mapPane);
+	                    }
+	                } else {
+	                    showMessage("Not enough money!", mapPane);
+	                }
+	            } else {
+	                showMessage("Invalid placement!", mapPane);
+	            }
+
+	            mapPane.getChildren().remove(dragGroup);
+	            mapPane.setOnMouseMoved(null);
+	            mapPane.setOnMouseClicked(null);
+	        });
+
+	        event.consume();
+	    });
 	}
+
 
 
 	private Button createTowerButton(String towerName, int towerType, int cost) throws FileNotFoundException{

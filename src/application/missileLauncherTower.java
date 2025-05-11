@@ -157,6 +157,11 @@ public class missileLauncherTower extends Towers {
 	public ImageView getImageView() {
 		return image;
 	}
+	@Override
+	protected double getRange() {
+
+		return range;
+	}
 }
 
 

@@ -111,9 +111,9 @@ public class GameMap {
 		}
 
 		cell.setTower(tower);
-		towers.add(tower);
 		tower.setPosition(cell.getCenterX(), cell.getCenterY());
-		mapPane.getChildren().add(tower.getView());
+		towers.add(tower);
+		mapPane.getChildren().add(tower.getImageView());
 		return true;
 	}
 
@@ -123,7 +123,7 @@ public class GameMap {
 				if (grid[row][col].getTower() == tower) {
 					grid[row][col].removeTower();
 					towers.remove(tower);
-					mapPane.getChildren().remove(tower.getView());
+					mapPane.getChildren().remove(tower.getImageView());
 					return;
 				}
 			}
@@ -185,7 +185,7 @@ public class GameMap {
 
 		// Add all existing towers back to the pane
 		for (Towers tower : towers) {
-			mapPane.getChildren().add(tower.getView());
+			mapPane.getChildren().add(tower.getImageView());
 
 			// Find the cell containing this tower and update tower position
 			for (int row = 0; row < height; row++) {
@@ -232,10 +232,7 @@ public class GameMap {
 		}
 	}
 
-	/**
-	 * Checks if a placement is valid for a tower
-	 * Required by test class for tower placement
-	 */
+
 	public boolean isValidPlacement(int row, int col) {
 		if (row < 0 || row >= height || col < 0 || col >= width) {
 			return false;
@@ -245,10 +242,7 @@ public class GameMap {
 		return !cell.isPath() && !cell.hasTower();
 	}
 
-	/**
-	 * Returns the start cell of the path
-	 * Required for enemy spawn point
-	 */
+
 	public Cell getStartCell() {
 		if (path != null && !path.isEmpty()) {
 			return path.get(0);
@@ -256,10 +250,6 @@ public class GameMap {
 		return null;
 	}
 
-	/**
-	 * Returns the end cell of the path
-	 * Required for enemy destination
-	 */
 	public Cell getEndCell() {
 		if (path != null && !path.isEmpty()) {
 			return path.get(path.size() - 1);
@@ -267,10 +257,6 @@ public class GameMap {
 		return null;
 	}
 
-	/**
-	 * Process a game tick for all towers
-	 * Called by game loop to update tower targeting and shooting
-	 */
 	public void update(List<Enemy> enemies) {
 		for (Towers tower : towers) {
 			tower.closestEnemy(enemies);

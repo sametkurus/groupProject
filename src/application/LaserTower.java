@@ -160,6 +160,10 @@ public ImageView loadTowerImage(int x, int y) {
     }
     return view;
 }
+@Override
+protected double getRange() {
+	return range;
+}
  
 
 }

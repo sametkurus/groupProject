@@ -29,6 +29,8 @@ public class singleShotTower extends Towers {
  public singleShotTower() throws FileNotFoundException {
 	 super();
      towerView = new ImageView(new Image(new FileInputStream("C:\\Users\\Simit\\eclipse-workspace\\TowerDefenceGame\\src\\resources\\singleShotTowerImage.png")));
+     towerView.setFitHeight(30);
+     towerView.setFitWidth(30);
  }
 
 
@@ -41,6 +43,7 @@ private List<bullet> bullets = new ArrayList<>();
 	 this.pane= pane;
 	 this.towerView = loadTowerImage(towerx, towery);
 	 this.pane.getChildren().add(towerView);
+	 
 	
 	 
  }
@@ -58,7 +61,7 @@ private List<bullet> bullets = new ArrayList<>();
  
  
 
- public ImageView loadTowerImage(int x, int y) {
+ public ImageView loadTowerImage(double x, double y) {
      ImageView view = new ImageView();
      try {
          Image towerImage = new Image(new FileInputStream("C:\\Users\\Simit\\eclipse-workspace\\TowerDefenceGame\\src\\resources\\singleShotTowerImage.png"));
@@ -169,6 +172,13 @@ private List<bullet> bullets = new ArrayList<>();
 
 public void setTowerView(ImageView towerView) {
 	this.towerView = towerView;
+}
+
+
+@Override
+protected double getRange() {
+	
+	return range;
 }
  }
 

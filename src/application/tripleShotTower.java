@@ -162,4 +162,8 @@ public class tripleShotTower extends Towers {
   public ImageView getImageView() {
       return image;
   }
+@Override
+protected double getRange() {
+	return range;
+}
 }

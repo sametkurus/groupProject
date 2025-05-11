@@ -2,6 +2,7 @@ package application;
 
 import java.util.List;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -13,7 +14,6 @@ public abstract  class Towers {
 	int damage;
 	double  attackSpeed;
 	private int price;
-	private javafx.scene.Node view;
 	Enemy target;
 	double time ;
 	Circle rangeIndicator;
@@ -21,7 +21,11 @@ public abstract  class Towers {
 	private  ImageView towerImage = new ImageView();
 	
 	public Towers() {
-		
+		rangeIndicator = new Circle(range);
+		rangeIndicator.setCenterX(towerx + towerImage.getFitWidth() / 2);
+		rangeIndicator.setCenterY(towery + towerImage.getFitHeight() / 2);
+		rangeIndicator.setStroke(Color.BLACK);
+		rangeIndicator.setFill(Color.TRANSPARENT);
 	}
 
 
@@ -82,18 +86,18 @@ public abstract  class Towers {
 		}
 		time += deltaTime;
 	}
-	public void showRangeIndicator(Pane layer) {
+	public void showRangeIndicator(BorderPane layer) {
 		if (!layer.getChildren().contains(rangeIndicator)) {
 			layer.getChildren().add(rangeIndicator);
 		}
 	}
-	public void hideRangeIndicator(Pane layer) {
+	public void hideRangeIndicator(BorderPane layer) {
 	    if (rangeIndicator != null && layer.getChildren().contains(rangeIndicator)) {
 	        layer.getChildren().remove(rangeIndicator);
 	    }
 	}
 
-	public abstract  ImageView loadTowerImage(int x , int y);
+	public abstract  ImageView loadTowerImage(double x , double y);
 	public abstract void shoot() ;
 	public abstract ImageView getImageView();
 	
@@ -118,22 +122,19 @@ public abstract  class Towers {
 	public void setPrice(int price) {
 		this.price = price;
 	}
-	public javafx.scene.Node getView() {
-		return view;
-	}
-
+	
 	public void setPosition(double x, double y) {
 		this.towerx = x;
 		this.towery = y;
 
 		// Update the view position
-		if (view instanceof javafx.scene.shape.Shape) {
-			((javafx.scene.shape.Shape) view).setTranslateX(x);
-			((javafx.scene.shape.Shape) view).setTranslateY(y);
-		} else if (view instanceof javafx.scene.Group) {
+		/*if (towerImage instanceof ImageView) {
+			((ImageView) towerImage).setTranslateX(x);
+			((ImageView) towerImage).setTranslateY(y);
+		} else if (towerImage instanceof javafx.scene.Group) {
 			((javafx.scene.Group) view).setTranslateX(x);
 			((javafx.scene.Group) view).setTranslateY(y);
-		}
+		}*/
 
 		// Update range circle position
 		if (rangeIndicator != null) {
@@ -142,5 +143,8 @@ public abstract  class Towers {
 		}
 
 	}
+
+
+	protected abstract double getRange();
 
 }
