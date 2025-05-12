@@ -49,6 +49,7 @@ public class Game extends Application{
 	private Player player;
 	private List<Enemy> enemies;
 	private List<Wave> waves;
+	private List<Cell> pathCells;
 	private Wave currentWave;
 	private AnimationTimer gameLoop;
 	private AnimationTimer waveTimer;
@@ -62,7 +63,7 @@ public class Game extends Application{
 	private Label moneyLabel;
 	private Label livesLabel;
 	private Label waveLabel;
-	private Pane mapPane;
+	 Pane mapPane;
 	private VBox towerPane;
 	private HBox statsPane;
 
@@ -76,6 +77,7 @@ public class Game extends Application{
 	private boolean isWaveActive = false;
 
 	private ImageView towerView;
+	private WaveManager waveManager;
 
 	public void start(Stage primaryStage) {
 		Text title = new Text("Tower Defense Game");
@@ -140,7 +142,7 @@ public class Game extends Application{
 	private void startGame(Stage primaryStage) throws FileNotFoundException {
 
 		root = new BorderPane();
-		scene = new Scene(root, 800, 600);
+		scene = new Scene(root, 800, 700);
 
 		player = new Player();
 		enemies = new ArrayList<>();
@@ -153,7 +155,11 @@ public class Game extends Application{
 
 		loadLevel(currentLevel);
 		setUI();
-
+/*
+		waveManager = new WaveManager(waves, enemies, gameMap.getPath(), player);
+		startGameLoop();
+		startWaveTimer(); */
+		
 		primaryStage.setScene(scene);
 		primaryStage.setTitle("Tower Defense Game");
 		primaryStage.show();
@@ -172,10 +178,10 @@ public class Game extends Application{
 
 		// Load map
 		File levelFile = new File("C:\\Users\\Simit\\eclipse-workspace\\TowerDefenceGame\\src\\application\\MapLevel-" 
-		+ currentLevel );
+				+ currentLevel );
 		TextDecoder decoder = new TextDecoder(levelFile);
 		gameMap = new GameMap(root, decoder);
-
+		pathCells = decoder.getPathCells();
 		// Load waves from decoder
 		loadWavesFromDecoder(decoder);
 
@@ -200,9 +206,9 @@ public class Game extends Application{
 	}
 
 	private void setUI() throws FileNotFoundException{
-		Pane mapPane = new Pane();
-		VBox towerPane = new VBox(10);
-		HBox statsPane = new HBox(20);
+		mapPane = new Pane();
+		towerPane = new VBox(10);
+		statsPane = new HBox(10);
 
 		// Configure map pane (center area)
 		mapPane.setStyle("-fx-background-color: #222;");
@@ -224,11 +230,16 @@ public class Game extends Application{
 				missileTowerBtn, 
 				laserTowerBtn);
 
+		//To sell towers
+		Button sellButton = new Button("Sell");
+		sellButton.setPrefWidth(120);
+		sellButton.setStyle("-fx-background-color: #cc0000; -fx-text-fill: white;");
+		towerPane.getChildren().add(sellButton);
 
 		towerPane.setAlignment(javafx.geometry.Pos.TOP_CENTER);
 
 		// Configure stats panel (bottom area)
-		statsPane.setPrefHeight(60);
+		statsPane.setPrefHeight(30);
 		statsPane.setStyle("-fx-background-color: #444; -fx-padding: 10;");
 		statsPane.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
 
@@ -248,7 +259,21 @@ public class Game extends Application{
 		statsPane.getChildren().addAll(moneyLabel, livesLabel, waveLabel, waveTimerLabel);
 
 		// Set up the layout structure with BorderPane
+		mapPane.widthProperty().addListener((obs, oldVal, newVal) -> {
+			if (gameMap != null) {
+				gameMap.handleResize();
+			}
+		});
+
+		mapPane.heightProperty().addListener((obs, oldVal, newVal) -> {
+			if (gameMap != null) {
+				gameMap.handleResize();
+			}
+		});
+
 		root.setCenter(mapPane);
+		mapPane.setLayoutX(0);
+		mapPane.setLayoutY(0);
 		root.setRight(towerPane);
 		root.setBottom(statsPane);
 
@@ -257,8 +282,8 @@ public class Game extends Application{
 		root.prefHeightProperty().bind(scene.heightProperty());
 
 		// Make map pane fill available space
-		mapPane.prefWidthProperty().bind(root.widthProperty().subtract(towerPane.getPrefWidth()));
-		mapPane.prefHeightProperty().bind(root.heightProperty().subtract(statsPane.getPrefHeight()));
+		mapPane.prefWidthProperty();
+		mapPane.prefHeightProperty();
 
 		// Make stats pane span full width
 		statsPane.prefWidthProperty().bind(root.widthProperty());
@@ -268,108 +293,207 @@ public class Game extends Application{
 			// This assumes your GameMap class adds its visual elements to the provided pane
 			gameMap.addToPane(mapPane);
 		}
-
+		setupSellEventHandler(sellButton, mapPane);
 		setupEventHandler(singleShotTowerBtn, mapPane);
 		setupEventHandler(laserTowerBtn, mapPane);
-		setupEventHandler(tripleShotTowerBtn, mapPane);
+		setupEventHandler(tripleShotTowerBtn, mapPane);	
 		setupEventHandler(missileTowerBtn, mapPane);
 	}
 
-	private void setupEventHandler(Button towerButton, Pane mapPane) throws FileNotFoundException{
-	    towerButton.setOnMousePressed(event -> {
-	        int[] towerInfo = (int[]) towerButton.getUserData();
-	        int towerType = towerInfo[0];
-	        int cost = towerInfo[1];
+	private void setupSellEventHandler(Button sellButton, Pane mapPane) {
+		sellButton.setOnDragOver(event -> {
+			event.acceptTransferModes(javafx.scene.input.TransferMode.MOVE);
+			event.consume();
+		});
 
-	        if (player.getMoney() < cost) {
-	            showMessage("Not enough money!", mapPane);
-	            return;
-	        }
+		sellButton.setOnDragDropped(event -> {
+			if (selectedTower != null) {
+				// Kuleyi bul ve sil
+				for (int row = 0; row < gameMap.getHeight(); row++) {
+					for (int col = 0; col < gameMap.getWidth(); col++) {
+						Cell cell = gameMap.getCell(row, col);
+						if (cell.getTower() == selectedTower) {
+							cell.removeTower();
+							mapPane.getChildren().remove(selectedTower.getImageView());
+							gameMap.getTowers().remove(selectedTower);
 
-	        // Kule nesnesi oluştur
-	        switch (towerType) {
-	            case 1: 
-					selectedTower = new singleShotTower(,,root);
-				
-	            break;
-	            case 2: selectedTower = new LaserTower(); 
-	            break;
-	            case 3: try {
-					selectedTower = new tripleShotTower();
-				} catch (FileNotFoundException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} 
-	            break;
-	            case 4: try {
-					selectedTower = new missileLauncherTower();
-				} catch (FileNotFoundException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} 
-	            break;
-	        }
+							// Fiyatı iade et
+							int refund = getTowerRefunds(selectedTower);
+							player.setMoney(player.getMoney() + refund);
+							updateUI();
+							showMessage("Tower sold for $" + refund, mapPane);
+							break;
+						}
+					}
+				}
+			}
+			selectedTower = null;
+			event.setDropCompleted(true);
+			event.consume();
+		});
 
-	        towerView = selectedTower.getImageView();
-	        towerView.setFitWidth(50);
-	        towerView.setFitHeight(50);
-	        towerView.setOpacity(0.7); // Drag sırasında yarı saydam
-
-	        // Menzil gösterimi (range indicator)
-	        rangeIndicator = new Circle(selectedTower.getRange());
-	        rangeIndicator.setStroke(Color.RED);
-	        rangeIndicator.setFill(Color.rgb(255, 0, 0, 0.2));
-	        rangeIndicator.setVisible(true);
-
-	        Group dragGroup = new Group(rangeIndicator, towerView);
-	        mapPane.getChildren().add(dragGroup);
-
-	        // Harita üzerinde mouse hareketi ile kulesi sürükle
-	        mapPane.setOnMouseMoved(e -> {
-	            double mouseX = e.getX();
-	            double mouseY = e.getY();
-
-	            dragGroup.setLayoutX(mouseX - 25);
-	            dragGroup.setLayoutY(mouseY - 25);
-
-	            rangeIndicator.setLayoutX(25);
-	            rangeIndicator.setLayoutY(25);
-	        });
-
-	        mapPane.setOnMouseClicked(e -> {
-	            double mouseX = e.getX();
-	            double mouseY = e.getY();
-
-	            int row = (int) (mouseY / gameMap.getCellSize());
-	            int col = (int) (mouseX / gameMap.getCellSize());
-
-	            if (gameMap.isValidPlacement(row, col)) {
-	                if (player.getMoney() >= cost) {
-	                    boolean placed = gameMap.placeTower(selectedTower, row, col);
-	                    if (placed) {
-	                        player.setMoney(player.getMoney() - cost);
-	                        updateUI();
-	                        showMessage("Tower placed!", mapPane);
-	                    } else {
-	                        showMessage("Placement failed!", mapPane);
-	                    }
-	                } else {
-	                    showMessage("Not enough money!", mapPane);
-	                }
-	            } else {
-	                showMessage("Invalid placement!", mapPane);
-	            }
-
-	            mapPane.getChildren().remove(dragGroup);
-	            mapPane.setOnMouseMoved(null);
-	            mapPane.setOnMouseClicked(null);
-	        });
-
-	        event.consume();
-	    });
 	}
 
+	private int getTowerRefunds(Towers tower) {
+		if (tower instanceof singleShotTower) return 40;
+		if (tower instanceof tripleShotTower) return 50;
+		if (tower instanceof LaserTower) return 100;
+		if (tower instanceof missileLauncherTower) return 120;
+		return 0;
+	}
 
+	// Fix in setupEventHandler method in Game class
+	private void setupEventHandler(Button towerButton, Pane mapPane) throws FileNotFoundException {
+		towerButton.setOnMousePressed(event -> {
+			int[] towerInfo = (int[]) towerButton.getUserData();
+			int towerType = towerInfo[0];
+			int cost = towerInfo[1];
+
+			if (player.getMoney() < cost) {
+				showMessage("Not enough money!", mapPane);
+				return;
+			}
+
+			// Create tower object based on type
+
+			switch (towerType) {
+			case 1: 
+				selectedTower = new singleShotTower(1,2,root);
+				break;
+			case 2: selectedTower = new LaserTower(1,2,root,gc); 
+			break;
+			case 3: 
+				selectedTower = new tripleShotTower(1,2,root);
+
+				break;
+			case 4: 
+				selectedTower = new missileLauncherTower(1,2,gc,root);
+
+				break;
+			}
+
+
+
+
+			towerView = selectedTower.getImageView();
+			towerView.setFitWidth(40);
+			towerView.setFitHeight(40);
+			towerView.setOpacity(0.7); // Drag sırasında yarı saydam
+			rangeIndicator = selectedTower.rangeIndicator;
+			;
+			
+			
+
+			// Menzil gösterimi (range indicator)
+			/*rangeIndicator = new Circle(selectedTower.getRange());
+			rangeIndicator.setStroke(Color.RED);
+			rangeIndicator.setFill(Color.rgb(255, 0, 0, 0.2));
+			rangeIndicator.setVisible(true);*/
+
+			Group dragGroup = new Group(rangeIndicator, towerView);
+			mapPane.getChildren().add(dragGroup);
+
+			// Harita üzerinde mouse hareketi ile kulesi sürükle
+			mapPane.setOnMouseMoved(e -> {
+				double mouseX = e.getX();
+				double mouseY = e.getY();
+
+				dragGroup.setLayoutX(mouseX- 25 );
+				dragGroup.setLayoutY(mouseY - 25);
+				rangeIndicator.setCenterX(20); // Ortalanmış şekilde, çünkü grup 25 sola kaydırıldı
+			    rangeIndicator.setCenterY(20);
+
+			
+			});
+
+			mapPane.setOnMouseClicked(e -> {
+				double mouseX = e.getX();
+				double mouseY = e.getY();
+
+				// Calculate the map offsets
+				double cellSize = gameMap.getCellSize();
+				double paneWidth = mapPane.getWidth();
+				double paneHeight = mapPane.getHeight();
+				double offsetX = (paneWidth - (gameMap.getWidth() * cellSize)) / 2;
+				double offsetY = (paneHeight - (gameMap.getHeight() * cellSize)) / 2;
+
+				if (offsetX < 0) offsetX = 0;
+				if (offsetY < 0) offsetY = 0;
+
+				// Adjust mouse coordinates based on offsets
+				double adjustedX = mouseX - offsetX;
+				double adjustedY = mouseY - offsetY;
+
+				// Calculate grid cell from adjusted coordinates
+				int col = (int) (adjustedX / cellSize);
+				int row = (int) (adjustedY / cellSize);
+
+				System.out.println("Mouse at: " + mouseX + "," + mouseY);
+				System.out.println("Adjusted to: " + adjustedX + "," + adjustedY);
+				System.out.println("Trying to place at cell: " + row + "," + col);
+
+				// FIX: Make sure we're getting the cell with the correct row/col
+				Cell targetCell = gameMap.getCell(row, col);
+				if (targetCell == null) {
+					showMessage("Invalid cell position!", mapPane);
+					return;
+				}
+
+				if (targetCell.isPath()) {
+					showMessage("Cannot place tower on the path!", mapPane);
+				}
+				else if (gameMap.isValidPlacement(row, col)) {
+					// Kule nesnesi oluştur
+					switch (towerType) {
+					case 1: 
+						selectedTower = new singleShotTower(col*gameMap.getCellSize(),row*gameMap.getCellSize(),root);
+						break;
+					case 2: 
+						selectedTower = new LaserTower(col* gameMap.getCellSize(),row* gameMap.getCellSize(),root, gc);
+
+						break;
+					case 3: 
+						selectedTower = new tripleShotTower(col* gameMap.getCellSize(),row* gameMap.getCellSize(),root);
+
+						break;
+					case 4: 
+						selectedTower = new missileLauncherTower(col* gameMap.getCellSize(),row* gameMap.getCellSize(),gc,root);
+
+						break;
+					}
+
+					player.setMoney(player.getMoney() - cost);
+					updateUI();
+					showMessage("Tower placed!", mapPane);
+				}
+				// FIX: Make sure the tower position is calculated correctly
+				// Position the tower image at the center of the cell
+				double centerX = targetCell.getCenterX() - towerView.getFitWidth()/2;
+				double centerY = targetCell.getCenterY() - towerView.getFitHeight()/2;
+				
+
+				if (player.getMoney() >= cost) {
+					boolean placed = gameMap.placeTower(selectedTower, row, col);
+					if (placed) {
+						player.setMoney(player.getMoney() - cost);
+						updateUI();
+						showMessage("Tower placed!", mapPane);
+					} else {
+						showMessage("Placement failed!", mapPane);
+					}
+				} else {
+					showMessage("Not enough money!", mapPane);
+				}
+
+
+				mapPane.getChildren().remove(dragGroup);
+				mapPane.setOnMouseMoved(null);
+				mapPane.setOnMouseClicked(null);
+			});
+
+			event.consume();
+		});
+	}
 
 	private Button createTowerButton(String towerName, int towerType, int cost) throws FileNotFoundException{
 
@@ -431,6 +555,138 @@ public class Game extends Application{
 
 		return towerButton;
 
+	}
+
+	private void startWaveTimer() {
+		waveStartTime = System.nanoTime();
+		isWaveActive = false;
+
+		waveTimer = new AnimationTimer() {
+			@Override
+			public void handle(long now) {
+				if (!gameRunning) return;
+
+				waveManager.update((now - waveStartTime) / 1_000_000_000.0); // Use WaveManager to update
+
+				if (waveManager.allWavesCompleted() && enemies.isEmpty()) {
+					levelComplete();
+				}
+
+				updateUI();
+			}
+		};
+		waveTimer.start();
+	}
+
+	private void spawnEnemy() {
+		Cell startCell = gameMap.getStartCell();
+		if (startCell != null) {
+			ArrayList<Cell> pathCells = new ArrayList<>(gameMap.getPath());
+			Enemy enemy = new Enemy(pathCells, player);
+			enemies.add(enemy);
+
+			// Düşmanı haritaya ekle
+			Pane mapPane = (Pane) root.getCenter();
+			mapPane.getChildren().add(enemy);
+		}
+	}
+	private void startGameLoop() {
+		gameLoop = new AnimationTimer() {
+			@Override
+			public void handle(long now) {
+				if (!gameRunning) return;
+
+				// Düşmanları hareket ettir
+				List<Enemy> deadEnemies = new ArrayList<>();
+				for (Enemy enemy : enemies) {
+					enemy.step();
+
+					// Düşman öldü mü?
+					if (!enemy.isAlive()) {
+						deadEnemies.add(enemy);
+						player.addMoney(10); // Düşman öldürme ödülü
+					}
+
+					// Düşman bitiş çizgisine ulaştı mı?
+					if (!enemy.isAlive() && enemy.getStepIndex() >= gameMap.getPath().size() - 1) {
+						player.loseLife();
+						if (player.getLives() <= 0) {
+							gameOver();
+						}
+					}
+				}
+
+				// Ölü düşmanları listeden kaldır
+				for (Enemy enemy : deadEnemies) {
+					Pane mapPane = (Pane) root.getCenter();
+					mapPane.getChildren().remove(enemy);
+					enemies.remove(enemy);
+				}
+
+				// Kuleleri güncelle (düşmanları hedefle ve ateş et)
+				gameMap.update(enemies);
+
+				// UI'ı güncelle
+				updateUI();
+			}
+		};
+		gameLoop.start();
+	}
+	private void gameOver() {
+		gameRunning = false;
+
+		Label gameOverLabel = new Label("GAME OVER");
+		gameOverLabel.setStyle("-fx-font-size: 48; -fx-text-fill: red;");
+		gameOverLabel.setLayoutX(scene.getWidth() / 2 - 100);
+		gameOverLabel.setLayoutY(scene.getHeight() / 2 - 30);
+
+		Button restartButton = new Button("Restart");
+		restartButton.setLayoutX(scene.getWidth() / 2 - 40);
+		restartButton.setLayoutY(scene.getHeight() / 2 + 30);
+		restartButton.setOnAction(e -> {
+			root.getChildren().removeAll(gameOverLabel, restartButton);
+			loadLevel(currentLevel);
+		});
+
+		root.getChildren().addAll(gameOverLabel, restartButton);
+	}
+
+	private void levelComplete() {
+		gameRunning = false;
+
+		if (currentLevel < 5) {
+			Label levelCompleteLabel = new Label("LEVEL " + currentLevel + " COMPLETE!");
+			levelCompleteLabel.setStyle("-fx-font-size: 36; -fx-text-fill: green;");
+			levelCompleteLabel.setLayoutX(scene.getWidth() / 2 - 150);
+			levelCompleteLabel.setLayoutY(scene.getHeight() / 2 - 30);
+
+			Button nextLevelButton = new Button("Next Level");
+			nextLevelButton.setLayoutX(scene.getWidth() / 2 - 50);
+			nextLevelButton.setLayoutY(scene.getHeight() / 2 + 30);
+			nextLevelButton.setOnAction(e -> {
+				root.getChildren().removeAll(levelCompleteLabel, nextLevelButton);
+				currentLevel++;
+				loadLevel(currentLevel);
+			});
+
+			root.getChildren().addAll(levelCompleteLabel, nextLevelButton);
+		} else {
+			Label gameCompleteLabel = new Label("YOU WIN! GAME COMPLETE!");
+			gameCompleteLabel.setStyle("-fx-font-size: 36; -fx-text-fill: gold;");
+			gameCompleteLabel.setLayoutX(scene.getWidth() / 2 - 180);
+			gameCompleteLabel.setLayoutY(scene.getHeight() / 2 - 30);
+
+			Button restartButton = new Button("Play Again");
+			restartButton.setLayoutX(scene.getWidth() / 2 - 50);
+			restartButton.setLayoutY(scene.getHeight() / 2 + 30);
+			restartButton.setOnAction(e -> {
+				root.getChildren().removeAll(gameCompleteLabel, restartButton);
+				currentLevel = 1;
+				loadLevel(currentLevel);
+			});
+
+			root.getChildren().addAll(gameCompleteLabel, restartButton);
+		}
 	}
 	private void updateUI() {
 		// Update money and lives labels

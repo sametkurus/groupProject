@@ -9,11 +9,10 @@ import java.util.ArrayList;
 public class WaveManager {
 
 	private List<Wave> waves;           // Tüm dalga verilerini tutar
-	private int currentWaveIndex = 0;   // Şu anki aktif dalganın indeksi
-
-	private double waveStartTimer = 0;  // Dalga başlamadan önce bekleme süresi
-	private double spawnTimer = 0;      // İki düşman arası süre
-	private int enemiesSpawned = 0;     // Şu ana kadar üretilen düşman sayısı
+	private int currentWaveIndex;   // Şu anki aktif dalganın indeksi
+	private double waveStartTimer;  // Dalga başlamadan önce bekleme süresi
+	private double spawnTimer;      // İki düşman arası süre
+	private int enemiesSpawned;     // Şu ana kadar üretilen düşman sayısı
 	private boolean waveActive = false; // Dalga şu anda aktif mi?
 
 	private List<Enemy> activeEnemies;  // Sahnedeki canlı düşmanlar

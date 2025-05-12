@@ -16,7 +16,8 @@ public class Cell {
 		this.size = size;
 		this.isPath = isPath;
 		this.tower = null; // Initially, no tower
-		this.rectangle = new Rectangle(col * size, row * size, size, size); // create the Rectangle
+		this.rectangle = new Rectangle(col * size , row * size , size, size); // create the Rectangle
+
 	}
 
 	public int getRow() {
@@ -68,10 +69,10 @@ public class Cell {
 	}
 
 	public void setPosition(double x, double y) {
-	    // Hücrenin pozisyonunu güncelle
+	    // Correctly position the cell at the exact coordinates
 	    Rectangle rect = getRectangle();
-	    rect.setX(x + (rect.getWidth() )); 
-	    rect.setY(y + (rect.getHeight() )); 
+	    rect.setX(x);
+	    rect.setY(y);
 	}
 
 	public double getCenterX() {

@@ -19,19 +19,23 @@ public class LaserTower extends Towers {
  final double Laser_Damage_per_second = 10;
  private Color laserColor = Color.RED;
  Image image;
+ ImageView towerImage;
  private List<Enemy> enemies;
  private Pane gamePane;
  Enemy nearest;
  
- public LaserTower() {
+ public LaserTower() throws FileNotFoundException {
 	super();
+    towerImage = new ImageView(new Image(new FileInputStream("C:\\Users\\Simit\\eclipse-workspace\\TowerDefenceGame\\src\\resources\\laserTowerImage.png")));
+    towerImage.setFitHeight(30);
+    towerImage.setFitWidth(30);
 }
-public LaserTower(int towerx, int towery,Pane pane,GraphicsContext gc) {
+public LaserTower(double towerx, double towery,Pane pane,GraphicsContext gc) {
 	 super(towerx, towery ,30 , 10 , 1 ,50);
 	 this.gamePane= pane;
 	 this.gc= gc;
-	 loadTowerImage();
-	 this.startAnimationTimer();
+	 loadTowerImage(towerx,towery);
+	
 
 	 
  }
@@ -39,7 +43,7 @@ public LaserTower(int towerx, int towery,Pane pane,GraphicsContext gc) {
      super(x, y, 30, 10, 1, 50);
      this.enemies = enemies;
      this.gamePane= gamePane;
-     loadTowerImage();
+     loadTowerImage(x,y);
      this.startAnimationTimer();
      
 
@@ -122,31 +126,17 @@ public LaserTower(int towerx, int towery,Pane pane,GraphicsContext gc) {
   
  }
  //currentTarget.takeDamage(beamDamagePerSecond * deltaSeconds);
- private void loadTowerImage() {
-     try {
-         image = new Image(new FileInputStream("C:\\Users\\Simit\\eclipse-workspace\\TowerDefenceGame\\src\\resources\\laserTowerImage.png"));
-     } catch (FileNotFoundException e) {
-         System.err.println("Tower image not found: " + e.getMessage());
-     }
+     
  
- }
  public void setEnemies(List<Enemy> enemies) {
 	    this.enemies = enemies;
 	}
- @Override
- public ImageView getImageView() {
-	 ImageView view = new ImageView();
-	 try {
-	 Image towerImage = new Image(new FileInputStream("C:\\Users\\Simit\\eclipse-workspace\\TowerDefenceGame\\src\\resources\\laserTowerImage.png"));
-     view.setImage(towerImage);
-	 }
-	 catch (FileNotFoundException e) {
-         System.err.println("Tower image not found: " + e.getMessage());
-     }
-     return view;
+ 
+public ImageView getImageView() {
+   return towerImage;
  }
 @Override
-public ImageView loadTowerImage(int x, int y) {
+public void loadTowerImage(double x, double y) {
 	ImageView view = new ImageView();
     try {
         Image towerImage = new Image(new FileInputStream("C:\\Users\\Simit\\eclipse-workspace\\TowerDefenceGame\\src\\resources\\laserTowerImage.png"));
@@ -158,7 +148,7 @@ public ImageView loadTowerImage(int x, int y) {
     } catch (FileNotFoundException e) {
         System.err.println("Tower image not found: " + e.getMessage());
     }
-    return view;
+this.towerImage = view;
 }
 @Override
 protected double getRange() {

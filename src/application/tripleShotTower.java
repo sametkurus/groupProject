@@ -29,17 +29,18 @@ public class tripleShotTower extends Towers {
    	 Image towerImage = new Image(new FileInputStream("C:\\Users\\Simit\\eclipse-workspace\\TowerDefenceGame\\src\\resources\\tripleShotTowerImage.png"));
      image.setImage(towerImage);
    }
-    public tripleShotTower(int towerx, int towery,Pane gamepane) {
+    public tripleShotTower(double towerx, double towery,Pane gamepane) {
    	 super(towerx, towery ,30 , 10 , 1 ,50);
-   	 this.gamePane= gamePane;
-   	 this.image =  loadTowerImage(towerx, towery);
-   	 this.startAnimationTimer();
+   	 //this.gamePane= gamePane;
+   	loadTowerImage(towerx, towery);
+	 gamepane.getChildren().add(image);
+   	 
     }
     public tripleShotTower(int x, int y,List<Enemy> enemies,Pane gamePane) {
         super(x, y, 30, 10, 1, 50);
         this.enemies = enemies;
         this.gamePane= gamePane;
-        this.image =  loadTowerImage(towerx, towery);
+        loadTowerImage(towerx, towery);
         this.startAnimationTimer();
     }
     private void startAnimationTimer() {
@@ -89,7 +90,7 @@ public class tripleShotTower extends Towers {
        // 3. En yakın düşmanı, tower merkezine uzaklığına göre bul
        double centerX = image.getX() + image.getFitWidth() / 2;
        double centerY = image.getY() + image.getFitHeight() / 2;
-       List<Enemy> targets = findClosestEnemies(Bullet_Count);
+       List<Enemy> targets = findClosestEnemies(3);
        for (Enemy enemy : targets) {
            try {
                // Görsel
@@ -118,7 +119,7 @@ public class tripleShotTower extends Towers {
        time = 1.0 /attackSpeed;
    }
    }
-   public  ImageView loadTowerImage(int x, int y) {
+   public  void loadTowerImage(double x, double y) {
 		 ImageView towerView = new ImageView();
 		 try {
 	         Image towerImage = new Image(new FileInputStream("C:\\Users\\Simit\\eclipse-workspace\\TowerDefenceGame\\src\\resources\\tripleShotTowerImage.png"));
@@ -130,7 +131,7 @@ public class tripleShotTower extends Towers {
 	     } catch (FileNotFoundException e) {
 	         System.err.println("Image file not found: " + e.getMessage());
 	     }
-		 return towerView;
+		 this.image = towerView;
 	 }
 
   List<Enemy> findClosestEnemies(int count) {
@@ -166,4 +167,9 @@ public class tripleShotTower extends Towers {
 protected double getRange() {
 	return range;
 }
+
+public void setEnemies(List<Enemy> enemies) {
+	    this.enemies = enemies;
+	}
+
 }

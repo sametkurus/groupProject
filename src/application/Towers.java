@@ -17,19 +17,20 @@ public abstract  class Towers {
 	Enemy target;
 	double time ;
 	Circle rangeIndicator;
+	
 
 	private  ImageView towerImage = new ImageView();
 	
 	public Towers() {
 		rangeIndicator = new Circle(range);
-		rangeIndicator.setCenterX(towerx + towerImage.getFitWidth() / 2);
+		rangeIndicator.setCenterX(towerx );
 		rangeIndicator.setCenterY(towery + towerImage.getFitHeight() / 2);
 		rangeIndicator.setStroke(Color.BLACK);
 		rangeIndicator.setFill(Color.TRANSPARENT);
 	}
 
 
-	public Towers(int towerx, int towery, int range, int damage, double attackSpeed, int price) {
+	public Towers(double towerx, double towery, int range, int damage, double attackSpeed, int price) {
 		this.towerx = towerx;
 		this.towery = towery;
 		this.range = range;
@@ -40,9 +41,9 @@ public abstract  class Towers {
 
 
 		rangeIndicator = new Circle(range);
-		rangeIndicator.setCenterX(towerx + towerImage.getFitWidth() / 2);
-		rangeIndicator.setCenterY(towery + towerImage.getFitHeight() / 2);
-		rangeIndicator.setStroke(Color.BLACK);
+		rangeIndicator.setCenterX(towerx  );
+		rangeIndicator.setCenterY(towery );
+		rangeIndicator.setStroke(Color.RED);
 		rangeIndicator.setFill(Color.TRANSPARENT);
 	}
 
@@ -97,8 +98,10 @@ public abstract  class Towers {
 	    }
 	}
 
-	public abstract  ImageView loadTowerImage(double x , double y);
+	public abstract  void loadTowerImage(double x , double y);
+	
 	public abstract void shoot() ;
+	
 	public abstract ImageView getImageView();
 	
 

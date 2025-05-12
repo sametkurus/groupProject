@@ -15,9 +15,8 @@ import javafx.scene.layout.Pane;
 public class missileLauncherTower extends Towers {
 	public double lastUpdate;
 	private double time = 0;
-	private List<Enemy> enemies;
+	private List<Enemy> enemies ;
 	ImageView image;
-	Enemy nearest = null;
 	GraphicsContext gc;
 	Pane pane;
 	double deltaTime;
@@ -33,12 +32,12 @@ public class missileLauncherTower extends Towers {
 		Image towerImage = new Image(new FileInputStream("C:\\Users\\Simit\\eclipse-workspace\\TowerDefenceGame\\src\\resources\\missileLauncherTowerImage.png"));
 		image.setImage(towerImage);
 	}
-	public missileLauncherTower (int towerx, int towery,GraphicsContext gc,Pane pane) {
+	public missileLauncherTower (double towerx, double towery,GraphicsContext gc,Pane pane) {
 		super(towerx, towery ,30 , 10 , 1 ,50);
 		this.gc= gc;
 		this.pane = pane;
-		this.image =  loadTowerImage(towerx, towery);
-		this.startAnimationTimer();
+		 loadTowerImage(towerx, towery);
+	
 
 	}
 	public missileLauncherTower(int towerx, int towery,List<Enemy> enemies,GraphicsContext gc,Pane pane) {
@@ -46,7 +45,7 @@ public class missileLauncherTower extends Towers {
 		this.enemies = enemies;
 		this.gc = gc;
 		this.pane=pane;
-		this.image =  loadTowerImage(towerx, towery);
+		loadTowerImage(towerx, towery);
 		this.startAnimationTimer();
 
 	}
@@ -99,12 +98,13 @@ public class missileLauncherTower extends Towers {
 	}
 	public void shoot() {
 		if (time <= 0) {
-
+			
 			double minDist = range;
 
 			// 3. En yakın düşmanı, tower merkezine uzaklığına göre bul
 			double centerX = image.getX() + image.getFitWidth() / 2;
 			double centerY = image.getY() + image.getFitHeight() / 2;
+			Enemy nearest = null;
 			nearest = closestEnemy(enemies);
 
 			// 4. Eğer menzilde bir hedef varsa, mermi oluşturup ekle
@@ -139,7 +139,7 @@ public class missileLauncherTower extends Towers {
 
 
 
-	public   ImageView loadTowerImage(int x , int y){
+	public void loadTowerImage(double x , double y){
 		ImageView towerView = new ImageView();
 		try {
 			Image towerImage = new Image(new FileInputStream("C:\\Users\\Simit\\eclipse-workspace\\TowerDefenceGame\\src\\resources\\missileLauncherTowerImage.png"));
@@ -151,7 +151,7 @@ public class missileLauncherTower extends Towers {
 		} catch (FileNotFoundException e) {
 			System.err.println("Image file not found: " + e.getMessage());
 		}
-		return towerView;
+		this.image = towerView;
 	}
 	@Override
 	public ImageView getImageView() {

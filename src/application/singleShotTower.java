@@ -38,10 +38,10 @@ public class singleShotTower extends Towers {
 
 private List<bullet> bullets = new ArrayList<>();
  
- public singleShotTower(int towerx, int towery,Pane pane) {
-	 super(towerx, towery ,30 , 10 , 1 ,50);
+ public singleShotTower(double towerx, double towery,Pane pane) {
+	 super(towerx, towery ,60 , 10 , 1 ,50);
 	 this.pane= pane;
-	 this.towerView = loadTowerImage(towerx, towery);
+	 loadTowerImage(towerx, towery);
 	 this.pane.getChildren().add(towerView);
 	 
 	
@@ -53,7 +53,7 @@ private List<bullet> bullets = new ArrayList<>();
      super(towerx, towery, 30, 10, 1, 50);
      this.enemies = enemies;
      this.pane= pane;
-     this.towerView = loadTowerImage(towerx, towery);
+     loadTowerImage(towerx, towery);
      this.pane.getChildren().add(towerView);
      startAnimationTimer();
     
@@ -61,7 +61,7 @@ private List<bullet> bullets = new ArrayList<>();
  
  
 
- public ImageView loadTowerImage(double x, double y) {
+ public void loadTowerImage(double x, double y) {
      ImageView view = new ImageView();
      try {
          Image towerImage = new Image(new FileInputStream("C:\\Users\\Simit\\eclipse-workspace\\TowerDefenceGame\\src\\resources\\singleShotTowerImage.png"));
@@ -73,7 +73,7 @@ private List<bullet> bullets = new ArrayList<>();
      } catch (FileNotFoundException e) {
          System.err.println("Tower image not found: " + e.getMessage());
      }
-     return view;
+     this.towerView = view;
  }
  
  private void startAnimationTimer() {

@@ -92,32 +92,43 @@ public class TextDecoder
         return waveData.stream().mapToInt(Integer::intValue).toArray();
     }
 
-    public ArrayList<Cell> getPathCells()
-    {
+ // Fix in TextDecoder class - getPathCells() method
+    public ArrayList<Cell> getPathCells() {
         ArrayList<Cell> pathCells = new ArrayList<>();
-        for (int i = 2; i < rows.length; i++)
-        {
-            if(rows[i].equals("WAVE_DATA:"))
-            {
+        for (int i = 2; i < rows.length; i++) {
+            if(rows[i].equals("WAVE_DATA:")) {
                 break;
             }
-            else
-            {
-                int x = Integer.parseInt((rows[i].split(","))[0]);
-                int y = Integer.parseInt((rows[i].split(","))[1]);
-
-                for (Cell cell : cells)
-                {
-                    if(cell.getRow() == x && cell.getCol() == y)
-                    {
-                        cell.setPath(true);
-                        pathCells.add(cell);
+            else {
+                String[] coordinates = rows[i].split(",");
+                if(coordinates.length >= 2) {
+                    int x = Integer.parseInt(coordinates[0].trim());
+                    int y = Integer.parseInt(coordinates[1].trim());
+                    
+                    // Find the cell with these coordinates
+                    Cell pathCell = null;
+                    for (Cell cell : cells) {
+                        if(cell.getRow() == x && cell.getCol() == y) {
+                            cell.setPath(true);
+                            pathCell = cell;
+                            break;
+                        }
+                    }
+                    
+                    if(pathCell != null) {
+                        pathCells.add(pathCell);
+                    } else {
+                        // Create a new cell if not found (this should be rare/never happen if cells are initialized properly)
+                        Cell newCell = new Cell(x, y, 0, true);
+                        pathCells.add(newCell);
+                        cells.add(newCell);
                     }
                 }
             }
         }
         return pathCells;
     }
+    
     public int getLevelWidth() {
         return Integer.parseInt((rows[0].split(":"))[1]);
     }

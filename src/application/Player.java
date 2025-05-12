@@ -16,7 +16,7 @@ public class Player {
 
 	//      Initializes a new player with default values  
 	public Player() {
-		this.money = 1000; // Starting money
+		this.money = 100000; // Starting money
 		this.lives = 5;  // Starting lives
 		this.currentLevel = 1;
 		this.score = 0;
