@@ -127,7 +127,7 @@ public class GameMap {
 
 		javafx.animation.ScaleTransition st = 
 				new javafx.animation.ScaleTransition(
-						javafx.util.Duration.millis(300), 
+						javafx.util.Duration.millis(200), 
 						cell.getRectangle());
 		st.setDelay(javafx.util.Duration.millis(delayFactor * 30));
 		st.setToX(1.00);

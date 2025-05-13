@@ -1,102 +1,102 @@
 package application;
+
 import java.util.List;
 import java.util.ArrayList;
 
-/**
- * Bu sınıf, oyundaki düşman dalgalarını (wave) yönetir.
- * Her dalga belirli bir süre sonra başlar ve belirli aralıklarla düşman üretir.
- */
 public class WaveManager {
-
-	private List<Wave> waves;           // Tüm dalga verilerini tutar
-	private int currentWaveIndex;   // Şu anki aktif dalganın indeksi
-	private double waveStartTimer;  // Dalga başlamadan önce bekleme süresi
-	private double spawnTimer;      // İki düşman arası süre
-	private int enemiesSpawned;     // Şu ana kadar üretilen düşman sayısı
-	private boolean waveActive = false; // Dalga şu anda aktif mi?
-
-	private List<Enemy> activeEnemies;  // Sahnedeki canlı düşmanlar
-	private List<Cell> path;       // Düşmanların izleyeceği yol
-	private Player player;
-
-
-	/**
-	 * Kurucu: Dalgaları, düşman listesini ve path bilgisini alır.
-	 */
-	public WaveManager(List<Wave> waves, List<Enemy> activeEnemies, List<Cell> path ,Player player) {
-		this.waves = waves;
-		this.activeEnemies = activeEnemies;
-		this.path = path;
-		this.player = player;
-
-		// İlk dalganın başlaması için bekleme süresi
-		this.waveStartTimer = waves.get(0).getDelayBeforeStart();
-	}
-
-	/**
-	 * Her frame çağrılır, zamanlayıcıları işler ve düşman üretir.
-	 */
-	public void update(double deltaTime) {
-		if (currentWaveIndex >= waves.size()) return; // Tüm dalgalar tamamlandıysa çık
-
-		Wave currentWave = waves.get(currentWaveIndex);
-
-		if (!waveActive) {
-			// Dalga başlamadan önceki bekleme süresi azaltılır
-			waveStartTimer -= deltaTime;
-
-			if (waveStartTimer <= 0) {
-				waveActive = true;
-				spawnTimer = 0; // ilk düşman hemen çıkabilir
-			}
-		}
-
-		if (waveActive) {
-			spawnTimer -= deltaTime;
-
-			// Yeni düşman üretilecek mi kontrol et
-			if (spawnTimer <= 0 && enemiesSpawned < currentWave.getEnemyCount()) {
-				spawnEnemy(); // düşman oluştur
-				enemiesSpawned++;
-				spawnTimer = currentWave.getTimeBetweenEnemies(); // sıradaki için bekleme süresi
-			}
-
-			// Dalganın tüm düşmanları üretildiyse bir sonraki dalgaya hazırlan
-			if (enemiesSpawned == currentWave.getEnemyCount()) {
-				waveActive = false;
-				currentWaveIndex++;
-				enemiesSpawned = 0;
-
-				// Eğer hâlâ dalga kaldıysa yeni bekleme süresini ayarla
-				if (currentWaveIndex < waves.size()) {
-					waveStartTimer = waves.get(currentWaveIndex).getDelayBeforeStart();
-				}
-			}
-		}
-	}
-
-	/**
-	 * Yeni bir düşman nesnesi oluşturur ve aktif düşman listesine ekler.
-	 */
-	private void spawnEnemy() {
-		Enemy enemy = new Enemy(path, player);
-		activeEnemies.add(enemy);
-	}
-
-	/**
-	 * UI için: Bir sonraki dalganın başlamasına kaç saniye kaldığını döndürür.
-	 */
-	public double getCountdownToNextWave() {
-		if (!waveActive && currentWaveIndex < waves.size()) {
-			return Math.max(0, waveStartTimer);
-		}
-		return 0;
-	}
-
-	/**
-	 * Tüm dalgalar tamamlandığında true döner.
-	 */
-	public boolean allWavesCompleted() {
-		return currentWaveIndex >= waves.size();
-	}
+    private List<Wave> waves;
+    private List<Enemy> enemies;
+    private List<Cell> path;
+    private Player player;
+    private int currentWaveIndex;
+    private double elapsedTime;
+    private boolean allWavesCompleted;
+    
+    public WaveManager(List<Wave> waves, List<Enemy> enemies, List<Cell> path, Player player) {
+        this.waves = waves;
+        this.enemies = enemies;
+        this.path = path;
+        this.player = player;
+        this.currentWaveIndex = 0;
+        this.elapsedTime = 0;
+        this.allWavesCompleted = false;
+    }
+    
+    public void update(double deltaTime) {
+        if (allWavesCompleted || currentWaveIndex >= waves.size()) {
+            return;
+        }
+        
+        elapsedTime += deltaTime;
+        Wave currentWave = waves.get(currentWaveIndex);
+        
+        // Check if it's time to spawn an enemy
+        if (currentWave.shouldSpawnEnemy(elapsedTime)) {
+            Enemy enemy = currentWave.spawnEnemy(path, player);
+            if (enemy != null) {
+                enemies.add(enemy);
+                System.out.println("Spawned enemy " + currentWave.getSpawnedEnemies() + "/" + currentWave.getEnemyCount());
+            }
+        }
+        
+        // Check if current wave is complete
+        boolean waveComplete = currentWave.getSpawnedEnemies() >= currentWave.getEnemyCount();
+        
+        // Check if all enemies from this wave have been defeated or reached the end
+        boolean allEnemiesProcessed = true;
+        for (Enemy enemy : new ArrayList<>(enemies)) {
+            if (!enemy.isAlive()) {
+                continue; // Skip dead enemies that haven't been removed yet
+            }
+            
+            // If this enemy was spawned in the current wave, the wave is not fully processed
+            allEnemiesProcessed = false;
+        }
+        
+        // If all enemies spawned and processed, move to next wave
+        if (waveComplete && allEnemiesProcessed) {
+            currentWave.markCompleted();
+            currentWaveIndex++;
+            System.out.println("Wave " + currentWaveIndex + " completed.");
+            
+            // Check if all waves are completed
+            if (currentWaveIndex >= waves.size()) {
+                allWavesCompleted = true;
+                System.out.println("All waves completed!");
+            }
+        }
+    }
+    
+    public Wave getCurrentWave() {
+        if (currentWaveIndex < waves.size()) {
+            return waves.get(currentWaveIndex);
+        }
+        return null;
+    }
+    
+    public int getCurrentWaveIndex() {
+        return currentWaveIndex;
+    }
+    
+    public double getTimeUntilNextWave() {
+        if (currentWaveIndex < waves.size()) {
+            Wave wave = waves.get(currentWaveIndex);
+            return wave.getRemainingTime(elapsedTime);
+        }
+        return -1; // No more waves
+    }
+    
+    public boolean allWavesCompleted() {
+        return allWavesCompleted;
+    }
+    
+    public void reset() {
+        currentWaveIndex = 0;
+        elapsedTime = 0;
+        allWavesCompleted = false;
+    }
+    
+    public double getElapsedTime() {
+        return elapsedTime;
+    }
 }

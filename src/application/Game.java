@@ -53,7 +53,7 @@ public class Game extends Application{
 	private Wave currentWave;
 	private AnimationTimer gameLoop;
 	private AnimationTimer waveTimer;
-	private int currentLevel = 5;
+	private int currentLevel = 1;
 	private boolean gameRunning = false;
 	private Canvas gameCanvas;
 	private GraphicsContext gc;
@@ -154,11 +154,6 @@ public class Game extends Application{
 		waveLabel = new Label("Wave: 0/0");
 
 		loadLevel(currentLevel);
-		setUI();
-/*
-		waveManager = new WaveManager(waves, enemies, gameMap.getPath(), player);
-		startGameLoop();
-		startWaveTimer(); */
 		
 		primaryStage.setScene(scene);
 		primaryStage.setTitle("Tower Defense Game");
@@ -180,19 +175,44 @@ public class Game extends Application{
 		File levelFile = new File("C:\\Users\\Simit\\eclipse-workspace\\TowerDefenceGame\\src\\application\\MapLevel-" 
 				+ currentLevel );
 		TextDecoder decoder = new TextDecoder(levelFile);
+		
+		if(mapPane==null) {
+			mapPane = new BorderPane();
+		}
+		
 		gameMap = new GameMap(root, decoder);
 		pathCells = decoder.getPathCells();
 		// Load waves from decoder
 		loadWavesFromDecoder(decoder);
 
 		// Reset player for new level (but keep money)
-		player.setLives(5);
+		player.setLives(1000000000);
 
 		// Start with first wave
 		if (!waves.isEmpty()) {
 			currentWave = waves.get(0);
 			gameRunning = true;
 		}
+		
+		try {
+	        setUI();
+	    } catch (FileNotFoundException e) {
+	        e.printStackTrace();
+	    }
+	    
+	    // Initialize wave manager and game loops
+	    waveManager = new WaveManager(waves, enemies, pathCells, player);
+	    startGameLoop();
+	    startWaveTimer();
+	    
+	    // Debug output
+	    System.out.println("Level " + currentLevel + " loaded with " + waves.size() + " waves");
+	    for (int i = 0; i < waves.size(); i++) {
+	        Wave wave = waves.get(i);
+	        System.out.println("Wave " + (i+1) + ": " + wave.getEnemyCount() + " enemies, " 
+	                + wave.getSpawnDelay() + "s delay, " + wave.getDelayBeforeStart() + "s before start");
+	    }
+		
 	}
 
 	private void loadWavesFromDecoder(TextDecoder decoder) {
@@ -558,24 +578,43 @@ public class Game extends Application{
 	}
 
 	private void startWaveTimer() {
-		waveStartTime = System.nanoTime();
-		isWaveActive = false;
+	    waveStartTime = System.nanoTime();
+	    isWaveActive = false;
 
-		waveTimer = new AnimationTimer() {
-			@Override
-			public void handle(long now) {
-				if (!gameRunning) return;
-
-				waveManager.update((now - waveStartTime) / 1_000_000_000.0); // Use WaveManager to update
-
-				if (waveManager.allWavesCompleted() && enemies.isEmpty()) {
-					levelComplete();
-				}
-
-				updateUI();
-			}
-		};
-		waveTimer.start();
+	    waveTimer = new AnimationTimer() {
+	        @Override
+	        public void handle(long now) {
+	            if (!gameRunning) return;
+	            
+	            double elapsedTimeInSeconds = (now - waveStartTime) / 1_000_000_000.0;
+	            waveManager.update(elapsedTimeInSeconds / 60); // Update wave manager with time delta
+	            
+	            // Update UI with wave information
+	            Wave currentWave = waveManager.getCurrentWave();
+	            if (currentWave != null) {
+	                double timeUntilNextWave = waveManager.getTimeUntilNextWave();
+	                if (timeUntilNextWave > 0) {
+	                    // Next wave countdown
+	                    waveTimerLabel.setText(String.format("Next Wave: %.1fs", timeUntilNextWave));
+	                    isWaveActive = false;
+	                } else {
+	                    // Wave in progress
+	                    int totalEnemies = currentWave.getEnemyCount();
+	                    int spawnedEnemies = currentWave.getSpawnedEnemies();
+	                    waveTimerLabel.setText(String.format("Wave Progress: %d/%d enemies", spawnedEnemies, totalEnemies));
+	                    isWaveActive = true;
+	                }
+	            }
+	            
+	            // Check for level completion
+	            if (waveManager.allWavesCompleted() && enemies.isEmpty()) {
+	                levelComplete();
+	            }
+	            
+	            updateUI();
+	        }
+	    };
+	    waveTimer.start();
 	}
 
 	private void spawnEnemy() {
@@ -591,132 +630,186 @@ public class Game extends Application{
 		}
 	}
 	private void startGameLoop() {
-		gameLoop = new AnimationTimer() {
-			@Override
-			public void handle(long now) {
-				if (!gameRunning) return;
-
-				// Düşmanları hareket ettir
-				List<Enemy> deadEnemies = new ArrayList<>();
-				for (Enemy enemy : enemies) {
-					enemy.step();
-
-					// Düşman öldü mü?
-					if (!enemy.isAlive()) {
-						deadEnemies.add(enemy);
-						player.addMoney(10); // Düşman öldürme ödülü
-					}
-
-					// Düşman bitiş çizgisine ulaştı mı?
-					if (!enemy.isAlive() && enemy.getStepIndex() >= gameMap.getPath().size() - 1) {
-						player.loseLife();
-						if (player.getLives() <= 0) {
-							gameOver();
-						}
-					}
-				}
-
-				// Ölü düşmanları listeden kaldır
-				for (Enemy enemy : deadEnemies) {
-					Pane mapPane = (Pane) root.getCenter();
-					mapPane.getChildren().remove(enemy);
-					enemies.remove(enemy);
-				}
-
-				// Kuleleri güncelle (düşmanları hedefle ve ateş et)
-				gameMap.update(enemies);
-
-				// UI'ı güncelle
-				updateUI();
-			}
-		};
-		gameLoop.start();
+	    gameLoop = new AnimationTimer() {
+	        private long lastUpdate = 0;
+	        
+	        @Override
+	        public void handle(long now) {
+	            if (!gameRunning) return;
+	            
+	            // Calculate time delta for smooth movement regardless of frame rate
+	            double deltaTime = (lastUpdate == 0) ? 0 : (now - lastUpdate) / 1_000_000_000.0;
+	            lastUpdate = now;
+	            
+	            // Process each enemy
+	            List<Enemy> deadEnemies = new ArrayList<>();
+	            for (Enemy enemy : new ArrayList<>(enemies)) {
+	                // Move enemy along path
+	                enemy.step();
+	                
+	                // Check if enemy is dead
+	                if (!enemy.isAlive()) {
+	                    deadEnemies.add(enemy);
+	                    
+	                    // Check if the enemy died because it reached the end
+	                    if (enemy.getStepIndex() >= gameMap.getPath().size() - 1) {
+	                        // Enemy reached the end
+	                        // Note: Life is already deducted in Enemy.reachEnd()
+	                        if (player.getLives() <= 0) {
+	                            gameOver();
+	                        }
+	                    } else {
+	                        // Enemy was killed by tower
+	                        player.addMoney(10); // Reward for killing enemy
+	                    }
+	                }
+	            }
+	            
+	            // Remove dead enemies from game
+	            for (Enemy enemy : deadEnemies) {
+	                mapPane.getChildren().remove(enemy);
+	                enemies.remove(enemy);
+	            }
+	            
+	            // Update towers to target and attack enemies
+	            gameMap.update(enemies);
+	            
+	            // Update UI
+	            updateUI();
+	        }
+	    };
+	    gameLoop.start();
 	}
+	
+	// Modified method: gameOver
 	private void gameOver() {
-		gameRunning = false;
-
-		Label gameOverLabel = new Label("GAME OVER");
-		gameOverLabel.setStyle("-fx-font-size: 48; -fx-text-fill: red;");
-		gameOverLabel.setLayoutX(scene.getWidth() / 2 - 100);
-		gameOverLabel.setLayoutY(scene.getHeight() / 2 - 30);
-
-		Button restartButton = new Button("Restart");
-		restartButton.setLayoutX(scene.getWidth() / 2 - 40);
-		restartButton.setLayoutY(scene.getHeight() / 2 + 30);
-		restartButton.setOnAction(e -> {
-			root.getChildren().removeAll(gameOverLabel, restartButton);
-			loadLevel(currentLevel);
-		});
-
-		root.getChildren().addAll(gameOverLabel, restartButton);
+	    gameRunning = false;
+	    
+	    // Stop all timers
+	    if (gameLoop != null) gameLoop.stop();
+	    if (waveTimer != null) waveTimer.stop();
+	    
+	    // Create game over overlay
+	    VBox gameOverBox = new VBox(20);
+	    gameOverBox.setAlignment(Pos.CENTER);
+	    gameOverBox.setStyle("-fx-background-color: rgba(0,0,0,0.7); -fx-padding: 30px;");
+	    
+	    Label gameOverLabel = new Label("GAME OVER");
+	    gameOverLabel.setStyle("-fx-font-size: 48px; -fx-text-fill: red; -fx-font-weight: bold;");
+	    
+	    Button restartButton = new Button("Restart Level");
+	    restartButton.setStyle("-fx-font-size: 20px; -fx-padding: 10px 20px;");
+	    restartButton.setOnAction(e -> {
+	        mapPane.getChildren().remove(gameOverBox);
+	        loadLevel(currentLevel);
+	    });
+	    
+	    Button mainMenuButton = new Button("Main Menu");
+	    mainMenuButton.setStyle("-fx-font-size: 20px; -fx-padding: 10px 20px;");
+	    mainMenuButton.setOnAction(e -> {
+	        try {
+	            start(stage); // Go back to start screen
+	        } catch (Exception ex) {
+	            ex.printStackTrace();
+	        }
+	    });
+	    
+	    gameOverBox.getChildren().addAll(gameOverLabel, restartButton, mainMenuButton);
+	    
+	    // Position in center of map pane
+	    gameOverBox.layoutXProperty().bind(mapPane.widthProperty().divide(2).subtract(gameOverBox.widthProperty().divide(2)));
+	    gameOverBox.layoutYProperty().bind(mapPane.heightProperty().divide(2).subtract(gameOverBox.heightProperty().divide(2)));
+	    
+	    mapPane.getChildren().add(gameOverBox);
 	}
 
+	// Modified method: levelComplete
 	private void levelComplete() {
-		gameRunning = false;
-
-		if (currentLevel < 5) {
-			Label levelCompleteLabel = new Label("LEVEL " + currentLevel + " COMPLETE!");
-			levelCompleteLabel.setStyle("-fx-font-size: 36; -fx-text-fill: green;");
-			levelCompleteLabel.setLayoutX(scene.getWidth() / 2 - 150);
-			levelCompleteLabel.setLayoutY(scene.getHeight() / 2 - 30);
-
-			Button nextLevelButton = new Button("Next Level");
-			nextLevelButton.setLayoutX(scene.getWidth() / 2 - 50);
-			nextLevelButton.setLayoutY(scene.getHeight() / 2 + 30);
-			nextLevelButton.setOnAction(e -> {
-				root.getChildren().removeAll(levelCompleteLabel, nextLevelButton);
-				currentLevel++;
-				loadLevel(currentLevel);
-			});
-
-			root.getChildren().addAll(levelCompleteLabel, nextLevelButton);
-		} else {
-			Label gameCompleteLabel = new Label("YOU WIN! GAME COMPLETE!");
-			gameCompleteLabel.setStyle("-fx-font-size: 36; -fx-text-fill: gold;");
-			gameCompleteLabel.setLayoutX(scene.getWidth() / 2 - 180);
-			gameCompleteLabel.setLayoutY(scene.getHeight() / 2 - 30);
-
-			Button restartButton = new Button("Play Again");
-			restartButton.setLayoutX(scene.getWidth() / 2 - 50);
-			restartButton.setLayoutY(scene.getHeight() / 2 + 30);
-			restartButton.setOnAction(e -> {
-				root.getChildren().removeAll(gameCompleteLabel, restartButton);
-				currentLevel = 1;
-				loadLevel(currentLevel);
-			});
-
-			root.getChildren().addAll(gameCompleteLabel, restartButton);
-		}
+	    gameRunning = false;
+	    
+	    // Stop all timers
+	    if (gameLoop != null) gameLoop.stop();
+	    if (waveTimer != null) waveTimer.stop();
+	    
+	    // Calculate how many enemies reached the end
+	    int startingLives = 5; // Initial lives value
+	    int livesLost = startingLives - player.getLives();
+	    
+	    // Create level complete overlay
+	    VBox levelCompleteBox = new VBox(20);
+	    levelCompleteBox.setAlignment(Pos.CENTER);
+	    levelCompleteBox.setStyle("-fx-background-color: rgba(0,0,0,0.7); -fx-padding: 30px;");
+	    
+	    Label levelCompleteLabel = new Label("LEVEL " + currentLevel + " COMPLETE!");
+	    levelCompleteLabel.setStyle("-fx-font-size: 36px; -fx-text-fill: green; -fx-font-weight: bold;");
+	    
+	    Label statisticsLabel = new Label("Enemies that reached the end: " + livesLost);
+	    statisticsLabel.setStyle("-fx-font-size: 18px; -fx-text-fill: white;");
+	    
+	    Button nextButton = null;
+	    
+	    if (currentLevel < 5) {
+	        // There are more levels available
+	        if (livesLost < 5) {
+	            // Player performed well enough to advance
+	            nextButton = new Button("Next Level");
+	            nextButton.setStyle("-fx-font-size: 20px; -fx-padding: 10px 20px;");
+	            nextButton.setOnAction(e -> {
+	                mapPane.getChildren().remove(levelCompleteBox);
+	                currentLevel++;
+	                loadLevel(currentLevel);
+	            });
+	        } else {
+	            // Too many enemies got through, must retry
+	            statisticsLabel.setText("Too many enemies reached the end! Try again.");
+	            statisticsLabel.setStyle("-fx-font-size: 18px; -fx-text-fill: #ffcc00;");
+	            
+	            nextButton = new Button("Retry Level");
+	            nextButton.setStyle("-fx-font-size: 20px; -fx-padding: 10px 20px;");
+	            nextButton.setOnAction(e -> {
+	                mapPane.getChildren().remove(levelCompleteBox);
+	                loadLevel(currentLevel);
+	            });
+	        }
+	    } else {
+	        // This was the final level
+	        levelCompleteLabel.setText("CONGRATULATIONS! GAME COMPLETE!");
+	        levelCompleteLabel.setStyle("-fx-font-size: 32px; -fx-text-fill: gold; -fx-font-weight: bold;");
+	        
+	        nextButton = new Button("Play Again");
+	        nextButton.setStyle("-fx-font-size: 20px; -fx-padding: 10px 20px;");
+	        nextButton.setOnAction(e -> {
+	            mapPane.getChildren().remove(levelCompleteBox);
+	            currentLevel = 1;
+	            loadLevel(currentLevel);
+	        });
+	    }
+	    
+	    Button mainMenuButton = new Button("Main Menu");
+	    mainMenuButton.setStyle("-fx-font-size: 20px; -fx-padding: 10px 20px;");
+	    mainMenuButton.setOnAction(e -> {
+	        try {
+	            start(stage); // Go back to start screen
+	        } catch (Exception ex) {
+	            ex.printStackTrace();
+	        }
+	    });
+	    
+	    levelCompleteBox.getChildren().addAll(levelCompleteLabel, statisticsLabel, nextButton, mainMenuButton);
+	    
+	    // Position in center of map pane
+	    levelCompleteBox.layoutXProperty().bind(mapPane.widthProperty().divide(2).subtract(levelCompleteBox.widthProperty().divide(2)));
+	    levelCompleteBox.layoutYProperty().bind(mapPane.heightProperty().divide(2).subtract(levelCompleteBox.heightProperty().divide(2)));
+	    
+	    mapPane.getChildren().add(levelCompleteBox);
 	}
+	
 	private void updateUI() {
 		// Update money and lives labels
 		moneyLabel.setText("Money: $" + player.getMoney());
 		livesLabel.setText("Lives: " + player.getLives());
 		waveLabel.setText("Wave: " + (currentWave != null ? (waves.indexOf(currentWave) + 1) : "0") + 
 				"/" + waves.size());
-
-		if (currentWave != null) {
-			if (!isWaveActive && waves.indexOf(currentWave) == 0) {
-				waveTimerLabel.setText("First Wave Starting...");
-			} else if (!isWaveActive) {
-				// Wave başlamadan önceki süreyi göster
-				long currentTime = System.nanoTime();
-				double remainingTime = currentWave.getDelayBeforeStart() - 
-						((currentTime - waveStartTime) / 1_000_000_000.0);
-
-				if (remainingTime > 0) {
-					waveTimerLabel.setText(String.format("Next Wave: %.1fs", remainingTime));
-				} else {
-					waveTimerLabel.setText("Wave In Progress");
-					isWaveActive = true;
-				}
-			} else {
-				// Wave aktifse progress göster
-				int totalEnemies = currentWave.getEnemyCount();
-				int killedEnemies = currentWave.getSpawnedEnemies() - enemies.size();
-				waveTimerLabel.setText(String.format("Enemies: %d/%d", killedEnemies, totalEnemies));
-			}
-		}
 	}
 
 	private void showMessage(String message, Pane pane) {

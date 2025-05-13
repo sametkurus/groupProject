@@ -1,153 +1,136 @@
 package application;
 
+import java.util.List;
 import javafx.scene.Group;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
-import javafx.scene.shape.Polygon;
+import javafx.scene.shape.Rectangle;
 
-import java.util.ArrayList;
-import java.util.List;
-
-
- // Bu sınıf, sahnede hareket eden bir düşmanı temsil eder.
-  //Enemy bir JavaFX Node'dur (Group) ve daire, üçgen ve sağlık çubuğu içerir.
- 
 public class Enemy extends Group {
-
-    // Temel bilgiler
-    private double x, y;               // Düşmanın ekrandaki konumu
-    private int health;               // Mevcut can değeri
-    private double speed;             // Hareket hızı
-    private List<Cell> path;         // İzlenecek yol
-    private int stepIndex;            // Yol üzerindeki geçilen adım
-    private boolean isAlive;          // Düşman canlı mı?
-
-    // Grafik bileşenleri
-    private Circle body;              // Ana gövde (kırmızı daire)
-    private Polygon head;             // Yön belirten üçgen
-    private HealthBar healthBar;      // Ayrı bir sınıfta tanımlı sağlık çubuğu
-
-    private final int maxHealth = 30; // Sabit maksimum can
-
+    private List<Cell> path;
+    private int stepIndex;
+    private double speed;
+    private int health;
+    private int maxHealth;
+    private boolean alive;
+    private Circle body;
+    private Rectangle healthBar;
+    private Rectangle healthBarBackground;
+    private Player player;
     
-    //  Düşman oluşturulurken yol bilgisi verilir ve şekiller tanımlanır.
-     
     public Enemy(List<Cell> path, Player player) {
         this.path = path;
-        Cell startingCell = path.getFirst();
-        this.x = startingCell.getCenterX();
-        this.y = startingCell.getCenterY();
-
-        this.health = maxHealth;
-        this.speed = 1.0;
         this.stepIndex = 0;
-        this.isAlive = true;
-
-        createGraphics();     // Şekil ve sağlık çubuğu oluşturulur
-        updateGraphics();     // İlk konum verilir
+        this.speed = 0.000000; // Speed factor (0-1)
+        this.maxHealth = 100;
+        this.health = maxHealth;
+        this.alive = true;
+        this.player = player;
+        
+        System.out.println("Enemy created at" + path.getFirst().getRow() + "," + path.getFirst().getCol());
+        // Create enemy visual representation
+        body = new Circle(15);
+        body.setFill(Color.RED);
+        body.setStroke(Color.BLACK);
+        
+        // Create health bar background
+        healthBarBackground = new Rectangle(30, 5);
+        healthBarBackground.setFill(Color.GRAY);
+        healthBarBackground.setX(-15);
+        healthBarBackground.setY(-25);
+        
+        // Create health bar
+        healthBar = new Rectangle(30, 5);
+        healthBar.setFill(Color.GREEN);
+        healthBar.setX(-15);
+        healthBar.setY(-25);
+        
+        // Add to group
+        getChildren().addAll(body, healthBarBackground, healthBar);
+        
+        // Initial position
+        if (!path.isEmpty()) {
+            Cell startCell = path.get(0);
+            setTranslateX(startCell.getCenterX());
+            setTranslateY(startCell.getCenterY());
+        }
     }
-
-    /**
-     * Düşmanı oluşturan görseller: daire, üçgen, sağlık çubuğu
-     */
-    private void createGraphics() {
-        body = new Circle(0, 0, 10, Color.DARKRED); // merkezde daire
-        head = new Polygon(                       // yukarı bakan üçgen
-            0.0, -14.0,
-            -8.0, -2.0,
-            8.0, -2.0
-        );
-        head.setFill(Color.GOLD);
-
-        healthBar = new HealthBar(maxHealth);
-        healthBar.setOffset(-20); // düşmanın üstüne yerleştirilir
-
-        this.getChildren().addAll(body, head, healthBar);
-    }
-
-    /**
-     * Her frame düşman hareket eder ve sağlık çubuğu güncellenir
-     */
+    
     public void step() {
-        if (!isAlive) return;
-
+        if (!alive) return;
+        
         if (stepIndex < path.size() - 1) {
-            Cell next = path.get(stepIndex + 1);
-            moveTowards(next);
-        } else {
-            reachGoal();
+            // Current position
+            double currentX = getTranslateX();
+            double currentY = getTranslateY();
+            
+            // Target position (next cell)
+            Cell nextCell = path.get(stepIndex + 1);
+            double targetX = nextCell.getCenterX();
+            double targetY = nextCell.getCenterY();
+            
+            // Calculate direction
+            double dx = targetX - currentX;
+            double dy = targetY - currentY;
+            double distance = Math.sqrt(dx * dx + dy * dy);
+            
+            // Move towards target
+            if (distance > 1) {
+                // Move a percentage of the way towards the target
+                double moveX = dx * speed;
+                double moveY = dy * speed;
+                setTranslateX(currentX + moveX);
+                setTranslateY(currentY + moveY);
+            } else {
+                // Reached next cell
+                stepIndex++;
+                if (stepIndex >= path.size() - 1) {
+                    // Reached end of path
+                    reachEnd();
+                }
+            }
         }
-
-        updateGraphics();
     }
-
-    /**
-     * Bir sonraki kareye doğru hareket eder.
-     */
-    private void moveTowards(Cell targetCell) {
-    	
-        double dx = targetCell.getCenterX() - x;
-        double dy = targetCell.getCenterY() - y;
-        double distance = Math.sqrt(dx * dx + dy * dy);
-
-        if (distance <= speed) {
-            x = targetCell.getCenterX();
-            y = targetCell.getCenterY();
-            stepIndex++;
-        } else {
-            x += speed * dx / distance;
-            y += speed * dy / distance;
-        }
-    }
-
-    /**
-     * Düşman hasar aldığında çağrılır, can azalır.
-     */
+    
     public void takeDamage(int damage) {
-        if (!isAlive) return;
-
         health -= damage;
-        healthBar.setHealth(health);
-
+        updateHealthBar();
+        
         if (health <= 0) {
             die();
         }
     }
-
-    /**
-     * Düşman ölür, sahneden gizlenir.
-     */
+    
+    private void updateHealthBar() {
+        double healthPercentage = (double) health / maxHealth;
+        healthBar.setWidth(30 * healthPercentage);
+    }
+    
     private void die() {
-        isAlive = false;
-        this.setVisible(false); // sahnede görünmesin
+        alive = false;
+        // Don't remove from parent yet - let the game loop handle clean-up
     }
-
-    /**
-     * Hedefe ulaştığında can eksiltmek için kullanılır.
-     */
-    private void reachGoal() {
-        isAlive = false;
-        this.setVisible(false);
-    }
-
     
-    //  Konum ve sağlık çubuğu görünümü güncellenir.
-     
-    private void updateGraphics() {
-        this.setTranslateX(x);
-        this.setTranslateY(y);
+    private void reachEnd() {
+        player.loseLife();
+        alive = false;
     }
-
+    
     public boolean isAlive() {
-        return isAlive;
+        return alive;
     }
     
-    public double getSpeed () {
-    	return this.speed;
+    public int getStepIndex() {
+        return stepIndex;
     }
-    public int getStepIndex () {
-    	return this.stepIndex;
+    
+    public void setSpeed(double speed) {
+        this.speed = speed;
     }
-    public double getX() { return x; }
-    public double getY() { return y; }
+    
+    public void setMaxHealth(int maxHealth) {
+        this.maxHealth = maxHealth;
+        this.health = maxHealth;
+        updateHealthBar();
+    }
 }
