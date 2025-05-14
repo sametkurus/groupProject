@@ -13,12 +13,13 @@ public class GameMap {
 	private List<Towers> towers;
 	Pane mapPane;
 	private TextDecoder decoder;
-
+	private List<Cell> pathCells2;
+	
+	
 	public GameMap(Pane mapPane, TextDecoder decoder) {
 		this.mapPane = mapPane;
 		this.decoder = decoder;
 		this.towers = new ArrayList<>();
-
 		initializeFromDecoder();
 	}
 
@@ -62,6 +63,7 @@ public class GameMap {
 				// Position the cell with the offset to center the map
 				grid[row][col].setPosition(offsetX + (col * cellSize), offsetY + (row * cellSize));
 
+				
 				// Style the cell based on type
 				styleCell(grid[row][col]);
 

@@ -53,7 +53,7 @@ public abstract  class Towers {
 	}
 
 	public boolean isInRange(Enemy enemy) {
-		double distance = (Math.sqrt(Math.pow(enemy.getX() - towerx, 2) + Math.pow(enemy.getY() -towery,2)));
+		double distance = (Math.sqrt(Math.pow(enemy.getEnemyX() - towerx, 2) + Math.pow(enemy.getEnemyY() -towery,2)));
 		if(range >= distance)
 			return true;
 		else
@@ -64,7 +64,7 @@ public abstract  class Towers {
 		double minDistance = range ;
 		for (Enemy enemy : enemies) {
 			if (isInRange(enemy)) {
-				double distance = Math.sqrt(Math.pow(enemy.getX() - towerx, 2) + Math.pow(enemy.getY() - towery, 2));
+				double distance = Math.sqrt(Math.pow(enemy.getEnemyX() - towerx, 2) + Math.pow(enemy.getEnemyY() - towery, 2));
 				if (distance < minDistance) {
 					minDistance = distance;
 					closestEnemy = enemy;

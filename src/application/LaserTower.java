@@ -90,7 +90,7 @@ public LaserTower(double towerx, double towery,Pane pane,GraphicsContext gc) {
 
      gc.setStroke(laserColor);
      gc.setLineWidth(2);
-     gc.strokeLine(centerX, centerY, target.getX(), target.getY());
+     gc.strokeLine(centerX, centerY, target.getEnemyX(), target.getEnemyY());
  }
  private void drawTower() {
          gc.drawImage(image, getTowerx(), getTowery(), 40, 40);

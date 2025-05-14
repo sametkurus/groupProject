@@ -17,7 +17,6 @@ public class Cell {
 		this.isPath = isPath;
 		this.tower = null; // Initially, no tower
 		this.rectangle = new Rectangle(col * size , row * size , size, size); // create the Rectangle
-
 	}
 
 	public int getRow() {
@@ -76,8 +75,7 @@ public class Cell {
 	}
 
 	public double getCenterX() {
-	    Rectangle rect = getRectangle();
-	    return rect.getX() + rect.getWidth() / 2;
+	    return rectangle.getX() + rectangle.getWidth() / 2;
 	}
 
 	public double getCenterY() {

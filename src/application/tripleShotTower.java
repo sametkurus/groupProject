@@ -143,7 +143,7 @@ public class tripleShotTower extends Towers {
         double minDistance = range;
         for (Enemy enemy : remainingEnemies) {
             if (isInRange(enemy)) { 
-                double distance = Math.sqrt(Math.pow(enemy.getX() - towerx, 2) + Math.pow(enemy.getY() - towery, 2));
+                double distance = Math.sqrt(Math.pow(enemy.getEnemyX() - towerx, 2) + Math.pow(enemy.getEnemyY() - towery, 2));
                 if (distance < minDistance) {
                     minDistance = distance;
                     closest = enemy;

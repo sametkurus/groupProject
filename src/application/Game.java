@@ -181,6 +181,7 @@ public class Game extends Application{
 		}
 		
 		gameMap = new GameMap(root, decoder);
+		
 		pathCells = decoder.getPathCells();
 		// Load waves from decoder
 		loadWavesFromDecoder(decoder);

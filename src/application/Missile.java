@@ -29,8 +29,8 @@ public class Missile extends Projectile {
     
     private void explode() {
         for (Enemy enemy : enemies) {
-            double dx = enemy.getX() - bulletX;
-            double dy = enemy.getY() - bulletY;
+            double dx = enemy.getEnemyX() - bulletX;
+            double dy = enemy.getEnemyY() - bulletY;
             double distance = Math.sqrt(dx * dx + dy * dy);
             if (distance <= explosionRadius && enemy.isAlive()) {
                 enemy.takeDamage(explosionDamage);
@@ -40,8 +40,8 @@ public class Missile extends Projectile {
         exploded = true;
     }
     private void checkCollision(Pane pane) {
-        double dx = bulletX - enemy.getX();
-        double dy = bulletY - enemy.getY();
+        double dx = bulletX - enemy.getEnemyX();
+        double dy = bulletY - enemy.getEnemyY();
         double distance = Math.sqrt(dx * dx + dy * dy);
 
         if (distance < explosionRadius) {  // Çarpışma mesafesi
@@ -51,11 +51,6 @@ public class Missile extends Projectile {
 
             // Mermi sahneden kaldırılır
             pane.getChildren().remove(image);
-
-            // Eğer düşman öldüyse, onu sahneden kaldır
-            if (!enemy.isAlive()) {
-                pane.getChildren().remove(enemy.getView());
-            }
 
             // Mermiyi pasif yap
             deactivate();

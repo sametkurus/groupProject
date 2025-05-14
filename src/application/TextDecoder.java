@@ -22,7 +22,7 @@ public class TextDecoder
         {
             for(int j = 0; j < height; j++)
             {
-                cells.add(new Cell(i, j, 0, false));
+                cells.add(new Cell(i, j, 70, false));
             }
         }
         waveDelays = getDelayToOtherWave();
@@ -119,7 +119,7 @@ public class TextDecoder
                         pathCells.add(pathCell);
                     } else {
                         // Create a new cell if not found (this should be rare/never happen if cells are initialized properly)
-                        Cell newCell = new Cell(x, y, 0, true);
+                        Cell newCell = new Cell(x, y, 70, true);
                         pathCells.add(newCell);
                         cells.add(newCell);
                     }

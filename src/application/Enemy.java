@@ -21,7 +21,7 @@ public class Enemy extends Group {
     public Enemy(List<Cell> path, Player player) {
         this.path = path;
         this.stepIndex = 0;
-        this.speed = 0.000000; // Speed factor (0-1)
+        this.speed = 0.01; // Speed factor (0-1)
         this.maxHealth = 100;
         this.health = maxHealth;
         this.alive = true;
@@ -74,6 +74,7 @@ public class Enemy extends Group {
             double dy = targetY - currentY;
             double distance = Math.sqrt(dx * dx + dy * dy);
             
+            System.out.println("Now the enemy is at " +nextCell.getRow() + "," + nextCell.getCol());
             // Move towards target
             if (distance > 1) {
                 // Move a percentage of the way towards the target
@@ -128,6 +129,17 @@ public class Enemy extends Group {
         this.speed = speed;
     }
     
+    public double getSpeed() {
+    	return this.speed;
+    }
+    
+    public double getEnemyX() {
+    	return body.getCenterX();
+    }
+    
+    public double getEnemyY() {
+    	return body.getCenterY();
+    }
     public void setMaxHealth(int maxHealth) {
         this.maxHealth = maxHealth;
         this.health = maxHealth;
