@@ -21,7 +21,8 @@ public class missileLauncherTower extends Towers {
 	GraphicsContext gc;
 	Pane pane;
 	double deltaTime;
-	private List<ExplosionEffect> effects = new ArrayList<>();
+	Missile Missile;
+	private final List<ExplosionEffect> explosionEffects = new ArrayList<>();
 	public List<Missile> missiles = new ArrayList<>();
 
 
@@ -31,13 +32,14 @@ public class missileLauncherTower extends Towers {
 		super();
 		this.image = new ImageView();
 		this.enemies = new ArrayList<>();
-		Image towerImage = new Image(new FileInputStream("C:/Users/Simit/eclipse-workspace/TowerDefenceGame/src/resources/missileLauncherTowerImage.png"));
+		Image towerImage = new Image(new FileInputStream("C:\\Users\\Simit\\eclipse-workspace\\TowerDefenceGame\\src\\resources\\missileLauncherTowerImage.png"));
 		image.setImage(towerImage);
 	}
 	public missileLauncherTower (double towerx, double towery,GraphicsContext gc,Pane pane) {
 		super(towerx, towery ,100 , 10 , 1 ,50);
 		this.gc= gc;
 		this.pane = pane;
+		
 		loadTowerImage(towerx, towery);
 		this.pane.getChildren().add(image);
 		this.startAnimationTimer();
@@ -49,7 +51,7 @@ public class missileLauncherTower extends Towers {
 		this.gc = gc;
 		this.pane=pane;
 		loadTowerImage(towerx, towery);
-		this.pane.getChildren().add(image);
+		 this.pane.getChildren().add(image);
 		this.startAnimationTimer();
 
 	}
@@ -82,19 +84,41 @@ public class missileLauncherTower extends Towers {
 		} else {
 			shoot();
 		}
+
 		updateMissiles(0.1);
-		updateEffects(0.1);
+		updateEffects(0.02);
+	
 	}
 	private void updateEffects(double deltaTime) {
-		Iterator<ExplosionEffect> iterator = effects.iterator();
-		while (iterator.hasNext()) {
-			ExplosionEffect effect = iterator.next();
-			effect.updateAndDraw(gc, deltaTime);
-			if (effect.isFinished()) {
-				iterator.remove();
-			}
-		}
+	    for (Missile missile : missiles) {
+	        for (Enemy enemy : enemies) {
+	            if (enemy.isAlive() && missileHitsEnemy(missile, enemy)) {
+	                // Patlama efekti oluştur
+	                explosionEffects.add(new ExplosionEffect(enemy.getX(), enemy.getY()));
+	                
+	                enemy.takeDamage(missile.getDamage());
+	                enemies.get(1).takeDamage(missile.getDamage()/2);
+	                // Eğer düşman hasar almalıysa
+	                missile.deactivate(); // Mermiyi pasif hale getir
+
+	                break; // Aynı mermi sadece bir düşmana çarpsın
+	            }
+	        }
+	    }
+
+	    // Efektleri güncelle
+	    Iterator<ExplosionEffect> iterator = explosionEffects.iterator();
+	    while (iterator.hasNext()) {
+	        ExplosionEffect effect = iterator.next();
+	        if (effect.isFinished()) {
+	            iterator.remove();
+	        } else {
+	            effect.updateAndDraw(pane, deltaTime);
+	        }
+	    }
 	}
+		
+
 	private void updateMissiles(double deltaTime) {
 		// Mermileri güncelleme işlemi
 		for (int i = 0; i < missiles.size(); i++) {
@@ -110,53 +134,54 @@ public class missileLauncherTower extends Towers {
 
 
 
-		// 3. En yakın düşmanı, tower merkezine uzaklığına göre bul
-		double centerX = image.getX() ;
-		double centerY = image.getY() ;
-		if(nearest == null) 
-			nearest= closestEnemy(enemies);
+			// 3. En yakın düşmanı, tower merkezine uzaklığına göre bul
+			double centerX = image.getX() ;
+			double centerY = image.getY() ;
+			 if(nearest == null) 
+		        	nearest= closestEnemy(enemies);
+			
+			
 
+			// 4. Eğer menzilde bir hedef varsa, mermi oluşturup ekle
+			if (nearest != null && nearest.isAlive()) {
+				try {
+					// missile picture
+					Image missileImg = new Image(new FileInputStream("C:\\Users\\Simit\\eclipse-workspace\\TowerDefenceGame\\src\\resources\\bullet4.png"));
+					ImageView missileView = new ImageView(missileImg);
+					missileView.setFitWidth(10);
+					missileView.setFitHeight(10);
+					missileView.setX(centerX );// 20 rastgele verillmiştir
+					missileView.setY(centerY);
 
+					// bullet nesnesi
+					 Missile = new Missile(missileView.getX(),missileView.getY() , 30 ,  this ,enemies,nearest,missileView);
+					                  // varsa ekstra init için
+					missiles.add(Missile); 
+					
+					
+					pane.getChildren().add(missileView);
+				    
+					
+					
 
-		// 4. Eğer menzilde bir hedef varsa, mermi oluşturup ekle
-		if (nearest != null && nearest.isAlive()) {
-			try {
-				// missile picture
-				Image missileImg = new Image(new FileInputStream("C:/Users/Simit/eclipse-workspace/TowerDefenceGame/src/resources/bullet4.png"));
-				ImageView missileView = new ImageView(missileImg);
-				missileView.setFitWidth(10);
-				missileView.setFitHeight(10);
-				missileView.setX(centerX );// 20 rastgele verillmiştir
-				missileView.setY(centerY);
-
-				// bullet nesnesi
-				Missile Missile = new Missile(missileView.getX(),missileView.getY() , 30 ,  this ,enemies,nearest,missileView);
-				// varsa ekstra init için
-				missiles.add(Missile); 
-
-				pane.getChildren().add(missileView);
-				ExplosionEffect explosion = new ExplosionEffect(centerX, centerY);
-				effects.add(explosion);
-				updateMissiles(deltaTime);
-
-				// zaman sayacını yeniden yükle
-				time = 1.00/attackSpeed; 
-			} catch (FileNotFoundException ex) {
-				System.err.println("Bullet image bulunamadı: " + ex.getMessage());
+					// zaman sayacını yeniden yükle
+					time = 1.00/attackSpeed; 
+				} catch (FileNotFoundException ex) {
+					System.err.println("Bullet image bulunamadı: " + ex.getMessage());
+				}
 			}
+			 nearest= closestEnemy(enemies);
 		}
-		nearest= closestEnemy(enemies);
-	}
+
+
+	
 
 
 
-
-
-	@Override
 	public   void loadTowerImage(double x , double y){
 		ImageView towerView = new ImageView();
 		try {
-			Image towerImage = new Image(new FileInputStream("C:/Users/Simit/eclipse-workspace/TowerDefenceGame/src/resources/missileLauncherTowerImage.png"));
+			Image towerImage = new Image(new FileInputStream("C:\\Users\\Simit\\eclipse-workspace\\TowerDefenceGame\\src\\resources\\missileLauncherTowerImage.png"));
 			towerView.setImage(towerImage);
 			towerView.setFitWidth(40);
 			towerView.setFitHeight(40);
@@ -167,6 +192,16 @@ public class missileLauncherTower extends Towers {
 		}
 		this.image= towerView;
 	}
+	public boolean missileHitsEnemy(Missile missile, Enemy enemy) {
+	    double dx = missile.bulletX - enemy.getX();
+	    double dy = missile.bulletY - enemy.getY();
+	    double distance = Math.sqrt(dx * dx + dy * dy);
+
+	    double hitRadius = 20; // Çarpışma hassasiyetine göre ayarlanabilir
+
+	    return distance < hitRadius;
+	}
+
 	@Override
 	public ImageView getImageView() {
 		return image;
@@ -176,6 +211,7 @@ public class missileLauncherTower extends Towers {
 
 		return range;
 	}
+	
 }
 
 

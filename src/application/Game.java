@@ -1,3 +1,7 @@
+
+//150123034-Samet KURUŞ-Game.java 
+
+
 package application;
 
 import javafx.application.Application;
@@ -386,7 +390,7 @@ public class Game extends Application{
 		return 0;
 	}
 
-	// Fix in setupEventHandler method in Game class
+	// setupEventHandler method
 	private void setupEventHandler(Button towerButton, Pane mapPane) throws FileNotFoundException {
 		towerButton.setOnMousePressed(event -> {
 			int[] towerInfo = (int[]) towerButton.getUserData();
@@ -470,7 +474,7 @@ public class Game extends Application{
 				System.out.println("Adjusted to: " + adjustedX + "," + adjustedY);
 				System.out.println("Trying to place at cell: " + row + "," + col);
 
-				// FIX: Make sure we're getting the cell with the correct row/col
+				// Make sure we're getting the cell with the correct row/col
 				Cell targetCell = gameMap.getCell(row, col);
 				if (targetCell == null) {
 					showMessage("Invalid cell position!", mapPane);
@@ -508,8 +512,8 @@ public class Game extends Application{
 					double cellCenterX = targetCell.getCenterX();
 					double cellCenterY = targetCell.getCenterY();
 
-					selectedTower.getImageView().setLayoutX(cellCenterX - selectedTower.getImageView().getFitWidth()/2);
-					selectedTower.getImageView().setLayoutY(cellCenterY - selectedTower.getImageView().getFitHeight()/2);
+					selectedTower.getImageView().setLayoutX(cellCenterX );
+					selectedTower.getImageView().setLayoutY(cellCenterY );
 
 					boolean placed = true;
 					if (placed) {
@@ -524,12 +528,8 @@ public class Game extends Application{
 					showMessage("Invalid placement location!", mapPane);
 
 				}
-				// FIX: Make sure the tower position is calculated correctly
-				// Position the tower image at the center of the cell
-		/*		double centerX = targetCell.getCenterX() - towerView.getFitWidth()/2;
-				double centerY = targetCell.getCenterY() - towerView.getFitHeight()/2;
+				// Make sure the tower position is calculated correctly
 
-*/
 				mapPane.getChildren().remove(dragGroup);
 				mapPane.setOnMouseMoved(null);
 				mapPane.setOnMouseClicked(null);
@@ -703,7 +703,7 @@ public class Game extends Application{
 		gameLoop.start();
 	}
 
-	// Modified method: gameOver
+	// gameOver
 	private void gameOver() {
 		gameRunning = false;
 
@@ -745,7 +745,7 @@ public class Game extends Application{
 		mapPane.getChildren().add(gameOverBox);
 	}
 
-	// Modified method: levelComplete
+	// levelComplete
 	private void levelComplete() {
 		gameRunning = false;
 

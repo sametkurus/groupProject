@@ -2,7 +2,6 @@ package application;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-
 import java.util.List;
 import javafx.animation.AnimationTimer;
 import javafx.scene.canvas.GraphicsContext;
@@ -16,10 +15,11 @@ public class LaserTower extends Towers {
  public GraphicsContext gc;
  
  double lastUpdate = 0;
- double deltaTime = 0.5;
+ double deltaTime = 0;
  double time =0;
- final double Laser_Damage_per_second = 0.001;
-// private Color laserColor = Color.RED;
+ final double Laser_Damage_per_second = 0.1;
+ double timeSinceLastShot = 0;
+ double cooldown = 0.1;
  Line laser;
  Image image;
  private List<Enemy> enemies;
@@ -29,7 +29,7 @@ public class LaserTower extends Towers {
  
  public LaserTower() throws FileNotFoundException {
 	super();
-	towerImage = new ImageView(new Image(new FileInputStream("C:/Users/Simit/eclipse-workspace/TowerDefenceGame/src/resources/laserTowerImage.png")));
+	towerImage = new ImageView(new Image(new FileInputStream("C:\\Users\\Simit\\eclipse-workspace\\TowerDefenceGame\\src\\resources\\laserTowerImage.png")));
     towerImage.setFitHeight(30);
     towerImage.setFitWidth(30);
 }
@@ -62,7 +62,6 @@ public LaserTower(double towerx, double towery,Pane pane,GraphicsContext gc) {
      new AnimationTimer() {
          @Override
          public void handle(long now) {
-        	 // gc.clearRect(0, 0, 800, 700);
         	  
              // Nano saniyeyi saniyeye çevir
              if (lastUpdate == 0) {
@@ -75,15 +74,25 @@ public LaserTower(double towerx, double towery,Pane pane,GraphicsContext gc) {
              // Zamanı güncelle
             
              shoot();
-             update(deltaTime);
+             
          }
      }.start();
  }
 
- public void update(double deltaTime) {
+ 
 
-   
- }
+ public void takeDamage(double deltaTime) {
+        timeSinceLastShot += deltaTime;
+
+        if (timeSinceLastShot >= cooldown) {
+        	 nearest.takeDamage((Laser_Damage_per_second ));
+            timeSinceLastShot = 0;
+        }
+    }
+	 public void update(double deltaTime) {
+	        
+	        }
+	    
  private void drawLaserTo(Enemy target) {
      double centerX = getTowerx() ;
      double centerY = getTowery();
@@ -101,6 +110,7 @@ public LaserTower(double towerx, double towery,Pane pane,GraphicsContext gc) {
  public void shoot() {
 	    // Eğer hedef ölü ise sıfırla
 	    if (nearest != null && !nearest.isAlive()) {
+	    	 gamePane.getChildren().remove(laser);
 	        nearest = null;
 	    }
 
@@ -111,17 +121,17 @@ public LaserTower(double towerx, double towery,Pane pane,GraphicsContext gc) {
 
 	    // Eğer hedef varsa ve menzildeyse
 	    if (nearest != null && nearest.isAlive() && isInRange(nearest)) {
-	        nearest.takeDamage((Laser_Damage_per_second));
+	    	
 	        drawLaserTo(nearest);
+	        takeDamage(deltaTime);
 	       
 	    }
 	}
- 
-@Override
+
  public void loadTowerImage(double x, double y) {
      ImageView view = new ImageView();
      try {
-         Image towerImage = new Image(new FileInputStream("C:/Users/Simit/eclipse-workspace/TowerDefenceGame/src/resources/laserTowerImage.png"));
+         Image towerImage = new Image(new FileInputStream("C:\\Users\\Simit\\eclipse-workspace\\TowerDefenceGame\\src\\resources\\laserTowerImage.png"));
          view.setImage(towerImage);
          view.setFitWidth(40);
          view.setFitHeight(40);

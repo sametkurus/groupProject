@@ -1,3 +1,6 @@
+
+//150123034-Samet KURUŞ
+
 package application;
 
 import java.util.ArrayList;
@@ -23,7 +26,7 @@ public class GameMap {
 		initializeFromDecoder();
 	}
 
-	// Fix in GameMap class - initializeFromDecoder method
+	// initializeFromDecoder method
 	public void initializeFromDecoder() {
 		// Get dimensions from decoder
 		this.width = decoder.getLevelWidth();
@@ -70,14 +73,14 @@ public class GameMap {
 				mapPane.getChildren().add(grid[row][col].getRectangle());
 			}
 		}
-		// ÖNEMLİ DÜZELTME: Yol üzerindeki hücrelerin konum bilgilerini path listesindeki hücrelerle eşleştir
+		// Yol üzerindeki hücrelerin konum bilgilerini path listesindeki hücrelerle eşleştir
 		updatePathCellPositions(offsetX, offsetY, cellSize);
 
 		// Animate grid loading
 		animateGridLoading();
 	}
 
-	// ÖNEMLİ DÜZELTME: Bu yeni metod ile yol hücrelerinin pozisyonlarını güncelleyelim
+	// Bu yeni metod ile yol hücrelerinin pozisyonlarını güncelleyelim
 	private void updatePathCellPositions(double offsetX, double offsetY, double cellSize) {
 		System.out.println("YOL POZİSYONLARI GÜNCELLENİYOR...");
 		for (Cell pathCell : path) {
@@ -192,7 +195,7 @@ public class GameMap {
 		st.setToY(1.00);
 		st.play();
 	}
-	// Fix in GameMap class - placeTower method
+	// placeTower method
 	public boolean placeTower(Towers tower, int row, int col) {
 		if (row < 0 || row >= height || col < 0 || col >= width) {
 			System.out.println("placeTower: Out of bounds - " + row + "," + col);
@@ -308,7 +311,7 @@ public class GameMap {
 			}
 		}
 
-		// ÖNEMLİ DÜZELTME: Yol hücrelerinin pozisyonlarını da güncelle
+		//Yol hücrelerinin pozisyonlarını da güncelle
 		updatePathCellPositions(offsetX, offsetY, cellSize);
 
 		updateTowerPositions(offsetX, offsetY, cellSize);
@@ -340,35 +343,11 @@ public class GameMap {
 					cell.setPosition(offsetX + (col * cellSize), offsetY + (row * cellSize));
 				}
 			}
-			// ÖNEMLİ DÜZELTME: Yol hücrelerinin pozisyonlarını da güncelle
+			//Yol hücrelerinin pozisyonlarını da güncelle
 			updatePathCellPositions(offsetX, offsetY, cellSize);
 
 			// Reposition all towers
-			for (Towers tower : towers) {
-				// Find the cell containing this tower
-				for (int row = 0; row < height; row++) {
-					for (int col = 0; col < width; col++) {
-						Cell cell = grid[row][col];
-						if (cell.getTower() == tower) {
-							// Get updated cell center
-							double centerX = cell.getCenterX();
-							double centerY = cell.getCenterY();
-
-							// Update tower position to the center of its cell
-							tower.setPosition(centerX, centerY);
-
-							// Update the image view position and size
-							if (tower.getImageView() != null) {
-								tower.getImageView().setFitWidth(cell.getSize() * 0.8);
-								tower.getImageView().setFitHeight(cell.getSize() * 0.8);
-								tower.getImageView().setLayoutX(centerX - tower.getImageView().getFitWidth() / 2);
-								tower.getImageView().setLayoutY(centerY - tower.getImageView().getFitHeight() / 2);
-							}
-							break;
-						}
-					}
-				}
-			}
+			updateTowerPositions(offsetX, offsetY, cellSize);
 		}
 	}
 

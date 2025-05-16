@@ -29,7 +29,7 @@ public class tripleShotTower extends Towers {
     tripleShotTower() throws FileNotFoundException {
    	 super();
    	 this.image = new ImageView();
-   	 Image towerImage = new Image(new FileInputStream("C:/Users/Simit/eclipse-workspace/TowerDefenceGame/src/resources/tripleShotTowerImage.png"));
+   	 Image towerImage = new Image(new FileInputStream("C:\\Users\\Simit\\eclipse-workspace\\TowerDefenceGame\\src\\resources\\tripleShotTowerImage.png"));
      image.setImage(towerImage);
    }
     public tripleShotTower(double towerx, double towery,Pane gamePane) {
@@ -98,7 +98,7 @@ public class tripleShotTower extends Towers {
        for (Enemy enemy : targets) {
            try {
                // Görsel
-               Image bulletImage = new Image(new FileInputStream("C:/Users/Simit/eclipse-workspace/TowerDefenceGame/src/resources/bullet4.png"));
+               Image bulletImage = new Image(new FileInputStream("C:\\Users\\Simit\\eclipse-workspace\\TowerDefenceGame\\src\\resources\\bullet4.png"));
                ImageView bulletView = new ImageView(bulletImage);
                bulletView.setFitWidth(10);
                bulletView.setFitHeight(10);
@@ -125,11 +125,10 @@ public class tripleShotTower extends Towers {
        
    
    }
-   @Override
    public  void loadTowerImage(double x, double y) {
 		 ImageView towerView = new ImageView();
 		 try {
-	         Image towerImage = new Image(new FileInputStream("C:/Users/Simit/eclipse-workspace/TowerDefenceGame/src/resources/tripleShotTowerImage.png"));
+	         Image towerImage = new Image(new FileInputStream("C:\\Users\\Simit\\eclipse-workspace\\TowerDefenceGame\\src\\resources\\tripleShotTowerImage.png"));
 	         towerView.setImage(towerImage);
 	         towerView.setFitWidth(40);
 	         towerView.setFitHeight(40);

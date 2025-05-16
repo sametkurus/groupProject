@@ -3,8 +3,6 @@ import java.util.List;
 
 import javafx.scene.layout.Pane;
 
-import java.util.ArrayList;
-
 /**
  * Bu sınıf, oyundaki düşman dalgalarını (wave) yönetir.
  * Her dalga belirli bir süre sonra başlar ve belirli aralıklarla düşman üretir.
