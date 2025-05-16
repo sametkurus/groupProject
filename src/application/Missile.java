@@ -8,7 +8,7 @@ import javafx.scene.layout.Pane;
 public class Missile extends Projectile {
 	private boolean active = true;
 	
-	   int explosionRadius = 50; 
+	   int explosionRadius = 5; 
 	   int explosionDamage = 80; 
 	   boolean exploded = false;
 	   List<Enemy> enemies;
@@ -16,7 +16,7 @@ public class Missile extends Projectile {
 	    
 	public Missile(double bulletx, double bullety,  int damage, Towers tower, List<Enemy> enemies,Enemy enemy,
 			ImageView image) {
-		super(bulletx, bullety, enemy, damage, 5,  tower, image);
+		super(bulletx, bullety, enemy, damage, 30,  tower, image);
 		   this.explosionDamage = damage * 2;
 	        this.enemies = enemies;	
 	}
@@ -29,8 +29,8 @@ public class Missile extends Projectile {
     
     private void explode() {
         for (Enemy enemy : enemies) {
-            double dx = enemy.getEnemyX() - bulletX;
-            double dy = enemy.getEnemyY() - bulletY;
+            double dx = enemy.getX() - bulletX;
+            double dy = enemy.getY() - bulletY;
             double distance = Math.sqrt(dx * dx + dy * dy);
             if (distance <= explosionRadius && enemy.isAlive()) {
                 enemy.takeDamage(explosionDamage);
@@ -40,8 +40,8 @@ public class Missile extends Projectile {
         exploded = true;
     }
     private void checkCollision(Pane pane) {
-        double dx = bulletX - enemy.getEnemyX();
-        double dy = bulletY - enemy.getEnemyY();
+        double dx = bulletX - enemy.getX();
+        double dy = bulletY - enemy.getY();
         double distance = Math.sqrt(dx * dx + dy * dy);
 
         if (distance < explosionRadius) {  // Çarpışma mesafesi
@@ -51,6 +51,11 @@ public class Missile extends Projectile {
 
             // Mermi sahneden kaldırılır
             pane.getChildren().remove(image);
+
+            // Eğer düşman öldüyse, onu sahneden kaldır
+            if (!enemy.isAlive()) {
+                pane.getChildren().remove(enemy);
+            }
 
             // Mermiyi pasif yap
             deactivate();

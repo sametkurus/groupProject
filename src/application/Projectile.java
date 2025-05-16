@@ -52,13 +52,13 @@ public abstract class Projectile {
     
 	public  double[] predictFuturePosition(Enemy enemy) {
 
-	    double dx = enemy.getEnemyX() - bulletX;
-	    double dy = enemy.getEnemyY() - bulletY;
+	    double dx = enemy.getX() - bulletX;
+	    double dy = enemy.getY() - bulletY;
 	    double distance = Math.sqrt(dx * dx + dy * dy);
 	    double timeToReach = distance / speed;
 
-	    double futureX = enemy.getEnemyX() + enemy.getSpeed()* timeToReach;
-	    double futureY = enemy.getEnemyY() + enemy.getSpeed() * timeToReach;
+	    double futureX = enemy.getX() + enemy.getSpeed()* timeToReach;
+	    double futureY = enemy.getY() + enemy.getSpeed() * timeToReach;
 
 	    return new double[]{futureX, futureY};
 	}

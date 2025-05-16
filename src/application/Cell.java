@@ -16,7 +16,7 @@ public class Cell {
 		this.size = size;
 		this.isPath = isPath;
 		this.tower = null; // Initially, no tower
-		this.rectangle = new Rectangle(col * size , row * size , size, size); // create the Rectangle
+		this.rectangle = new Rectangle(size, size); // create the Rectangle
 	}
 
 	public int getRow() {
@@ -59,27 +59,26 @@ public class Cell {
 	public boolean hasTower() {
 		return tower != null;
 	}
-	
+
 	public void resize(double newSize) {
-	    // Hücrenin boyutunu güncelle
-	    Rectangle rect = getRectangle();
-	    rect.setWidth(newSize);  
-	    rect.setHeight(newSize); 
+		this.size = newSize;
+		rectangle.setWidth(newSize);  
+		rectangle.setHeight(newSize); 
 	}
 
 	public void setPosition(double x, double y) {
-	    // Correctly position the cell at the exact coordinates
-	    Rectangle rect = getRectangle();
-	    rect.setX(x);
-	    rect.setY(y);
+		// Correctly position the cell at the exact coordinates
+		Rectangle rect = getRectangle();
+		rect.setX(x);
+		rect.setY(y);
 	}
 
 	public double getCenterX() {
-	    return rectangle.getX() + rectangle.getWidth() / 2;
+		return rectangle.getX() + rectangle.getWidth() / 2;
 	}
 
 	public double getCenterY() {
-	    Rectangle rect = getRectangle();
-	    return rect.getY() + rect.getHeight() / 2;
+
+		return rectangle.getY() + rectangle.getHeight() / 2;
 	}
 }

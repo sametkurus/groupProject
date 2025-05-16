@@ -21,16 +21,21 @@ public class bullet extends Projectile{
 	        checkCollision(pane);
 	    }
 	 private void checkCollision(Pane pane) {
-	        double dx = bulletX - enemy.getEnemyX();
-	        double dy = bulletY - enemy.getEnemyY();
+	        double dx = bulletX - enemy.getX();
+	        double dy = bulletY - enemy.getY();
 	        double distance = Math.sqrt(dx * dx + dy * dy);
 
-	        if (distance < 15) {  // Çarpışma mesafesi
+	        if (distance < 5) {  // Çarpışma mesafesi
 	            // Düşmana hasar ver
 	            enemy.takeDamage(getDamage());
 
 	            // Mermi sahneden kaldırılır
 	            pane.getChildren().remove(image);
+
+	            // Eğer düşman öldüyse, onu sahneden kaldır
+	            if (!enemy.isAlive()) {
+	                enemy.die();
+	            }
 
 	            // Mermiyi pasif yap
 	            deactivate();

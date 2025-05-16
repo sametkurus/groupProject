@@ -14,8 +14,8 @@ public class GameMap {
 	Pane mapPane;
 	private TextDecoder decoder;
 	private List<Cell> pathCells2;
-	
-	
+
+
 	public GameMap(Pane mapPane, TextDecoder decoder) {
 		this.mapPane = mapPane;
 		this.decoder = decoder;
@@ -54,16 +54,15 @@ public class GameMap {
 		// Initialize all cells
 		for (int row = 0; row < height; row++) {
 			for (int col = 0; col < width; col++) {
-				boolean isPath = isPathCell(row, col);
-				if(isPath) {
-					System.out.println("Path cell at: " + row + "," + col);
-				}
+				boolean isPath = isPathCell(row,col);
+				grid[row][col] = new Cell(row, col, cellSize, isPath);
+
 				grid[row][col] = new Cell(row, col, cellSize, isPath);
 
 				// Position the cell with the offset to center the map
 				grid[row][col].setPosition(offsetX + (col * cellSize), offsetY + (row * cellSize));
 
-				
+
 				// Style the cell based on type
 				styleCell(grid[row][col]);
 
@@ -71,9 +70,34 @@ public class GameMap {
 				mapPane.getChildren().add(grid[row][col].getRectangle());
 			}
 		}
+		// ÖNEMLİ DÜZELTME: Yol üzerindeki hücrelerin konum bilgilerini path listesindeki hücrelerle eşleştir
+		updatePathCellPositions(offsetX, offsetY, cellSize);
 
 		// Animate grid loading
 		animateGridLoading();
+	}
+
+	// ÖNEMLİ DÜZELTME: Bu yeni metod ile yol hücrelerinin pozisyonlarını güncelleyelim
+	private void updatePathCellPositions(double offsetX, double offsetY, double cellSize) {
+		System.out.println("YOL POZİSYONLARI GÜNCELLENİYOR...");
+		for (Cell pathCell : path) {
+			int row = pathCell.getRow();
+			int col = pathCell.getCol();
+
+			// Grid sınırları içinde mi kontrol et
+			if (row >= 0 && row < height && col >= 0 && col < width) {
+				// Bu konumdaki grid hücresinin pozisyonunu al
+				Cell gridCell = grid[row][col];
+
+				// Path hücresini grid hücresiyle aynı konuma getir
+				pathCell.setPosition(gridCell.getRectangle().getX(), gridCell.getRectangle().getY());
+
+				System.out.println("Yol Hücresi Güncellendi [" + row + "," + col + "]: " + 
+						pathCell.getCenterX() + "," + pathCell.getCenterY());
+			} else {
+				System.out.println("HATA: Yol hücresi grid sınırları dışında [" + row + "," + col + "]");
+			}
+		}
 	}
 
 	private double calculateCellSize() {
@@ -138,33 +162,44 @@ public class GameMap {
 	}
 	// Fix in GameMap class - placeTower method
 	public boolean placeTower(Towers tower, int row, int col) {
-	    if (row < 0 || row >= height || col < 0 || col >= width) {
-	        System.out.println("placeTower: Out of bounds - " + row + "," + col);
-	        return false;
-	    }
+		if (row < 0 || row >= height || col < 0 || col >= width) {
+			System.out.println("placeTower: Out of bounds - " + row + "," + col);
+			return false;
+		}
 
-	    Cell cell = grid[row][col];
-	    if (cell.isPath() || cell.hasTower()) {
-	        System.out.println("placeTower: Invalid cell - isPath: " + cell.isPath() + ", hasTower: " + cell.hasTower());
-	        return false;
-	    }
+		Cell cell = grid[row][col];
+		if (cell.isPath() || cell.hasTower()) {
+			System.out.println("placeTower: Invalid cell - isPath: " + cell.isPath() + ", hasTower: " + cell.hasTower());
+			return false;
+		}
 
-	    cell.setTower(tower);
-	    
-	    // FIX: Position the tower correctly at the center of the cell
-	    double centerX = cell.getCenterX();
-	    double centerY = cell.getCenterY();
-	    System.out.println("Positioning tower at: " + centerX + "," + centerY + " (cell: " + row + "," + col + ")");
-	    
-	    tower.setPosition(centerX, centerY);
-	    towers.add(tower);
-	    
-	    // Make sure the tower's image view is added to the pane
-	    if (!mapPane.getChildren().contains(tower.getImageView())) {
-	        mapPane.getChildren().add(tower.getImageView());
-	    }
+		cell.setTower(tower);
 
-	    return true;
+		// FIX: Position the tower correctly at the center of the cell
+		double centerX = cell.getCenterX();
+		double centerY = cell.getCenterY();
+		System.out.println("Positioning tower at: " + centerX + "," + centerY + " (cell: " + row + "," + col + ")");
+
+		tower.setPosition(centerX, centerY);
+		
+		// Make sure the tower's image view is properly sized
+	    if (tower.getImageView() != null) {
+	        tower.getImageView().setFitWidth(cell.getSize() * 0.8); // 80% of cell size
+	        tower.getImageView().setFitHeight(cell.getSize() * 0.8);
+	        
+	        // Update the layout coordinates to center the image
+	        tower.getImageView().setLayoutX(centerX - tower.getImageView().getFitWidth() / 2);
+	        tower.getImageView().setLayoutY(centerY - tower.getImageView().getFitHeight() / 2);
+	    }
+	    
+		towers.add(tower);
+
+		// Make sure the tower's image view is added to the pane
+		if (!mapPane.getChildren().contains(tower.getImageView())) {
+			mapPane.getChildren().add(tower.getImageView());
+		}
+
+		return true;
 	}
 
 
@@ -241,6 +276,9 @@ public class GameMap {
 			}
 		}
 
+		// ÖNEMLİ DÜZELTME: Yol hücrelerinin pozisyonlarını da güncelle
+		updatePathCellPositions(offsetX, offsetY, cellSize);
+
 		// Add all existing towers back to the pane and update their positions
 		for (Towers tower : towers) {
 			mapPane.getChildren().add(tower.getImageView());
@@ -266,7 +304,41 @@ public class GameMap {
 
 	public void handleResize() {
 		if (mapPane != null && grid != null) {
-			addToPane(mapPane); // Recalculate and reposition all cells
+			// Recalculate cell size based on new dimensions
+			double cellSize = calculateCellSize();
+
+			// Calculate new offsets to center the map
+			double offsetX = (mapPane.getWidth() - (width * cellSize)) / 2;
+			double offsetY = (mapPane.getHeight() - (height * cellSize)) / 2;
+
+			if (offsetX < 0) offsetX = 0;
+			if (offsetY < 0) offsetY = 0;
+
+			// Reposition all cells
+			for (int row = 0; row < height; row++) {
+				for (int col = 0; col < width; col++) {
+					Cell cell = grid[row][col];
+					cell.resize(cellSize);
+					cell.setPosition(offsetX + (col * cellSize), offsetY + (row * cellSize));
+				}
+			}
+			// ÖNEMLİ DÜZELTME: Yol hücrelerinin pozisyonlarını da güncelle
+			updatePathCellPositions(offsetX, offsetY, cellSize);
+
+			// Reposition all towers
+			for (Towers tower : towers) {
+				// Find the cell containing this tower
+				for (int row = 0; row < height; row++) {
+					for (int col = 0; col < width; col++) {
+						Cell cell = grid[row][col];
+						if (cell.getTower() == tower) {
+							// Update tower position to the center of its cell
+							tower.setPosition(cell.getCenterX(), cell.getCenterY());
+							break;
+						}
+					}
+				}
+			}
 		}
 	}
 

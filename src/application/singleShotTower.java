@@ -8,10 +8,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
 import javafx.animation.AnimationTimer;
-import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
+
 
 
 public class singleShotTower extends Towers {
@@ -19,8 +16,9 @@ public class singleShotTower extends Towers {
  private List<Enemy> enemies;
    ImageView towerView;
  long lastUpdate;
- double deltaTime;
+ double deltaTime = 0.5;
  Pane pane ;
+ Enemy nearest = null;
 
 
 
@@ -28,7 +26,7 @@ public class singleShotTower extends Towers {
 
  public singleShotTower() throws FileNotFoundException {
 	 super();
-     towerView = new ImageView(new Image(new FileInputStream("C:\\Users\\Simit\\eclipse-workspace\\TowerDefenceGame\\src\\resources\\singleShotTowerImage.png")));
+     towerView = new ImageView(new Image(new FileInputStream("C:/Users/Simit/eclipse-workspace/TowerDefenceGame/src/resources/singleShotTowerImage.png")));
      towerView.setFitHeight(30);
      towerView.setFitWidth(30);
  }
@@ -39,7 +37,7 @@ public class singleShotTower extends Towers {
 private List<bullet> bullets = new ArrayList<>();
  
  public singleShotTower(double towerx, double towery,Pane pane) {
-	 super(towerx, towery ,60 , 10 , 1 ,50);
+	 super(towerx, towery ,100 , 10 , 1 ,50);
 	 this.pane= pane;
 	 loadTowerImage(towerx, towery);
 	 this.pane.getChildren().add(towerView);
@@ -49,8 +47,8 @@ private List<bullet> bullets = new ArrayList<>();
  }
 
  
- public singleShotTower(int towerx, int towery,List<Enemy> enemies,Pane pane) {
-     super(towerx, towery, 30, 10, 1, 50);
+ public singleShotTower(double towerx, double towery,List<Enemy> enemies,Pane pane) {
+     super(towerx, towery, 100, 10, 1, 50);
      this.enemies = enemies;
      this.pane= pane;
      loadTowerImage(towerx, towery);
@@ -60,23 +58,33 @@ private List<bullet> bullets = new ArrayList<>();
  }
  
  
-
+ @Override
  public void loadTowerImage(double x, double y) {
-     ImageView view = new ImageView();
      try {
-         Image towerImage = new Image(new FileInputStream("C:\\Users\\Simit\\eclipse-workspace\\TowerDefenceGame\\src\\resources\\singleShotTowerImage.png"));
-         view.setImage(towerImage);
-         view.setFitWidth(40);
-         view.setFitHeight(40);
-         view.setX(x);
-         view.setY(y);
+         Image image = new Image(new FileInputStream("C:/Users/Simit/eclipse-workspace/TowerDefenceGame/src/resources/singleShotTowerImage.png")); // Replace with actual image path
+         towerView = new ImageView(image);
+         towerView.setFitWidth(40);
+         towerView.setFitHeight(40);
+         towerView.setPreserveRatio(true);
+         towerView.setSmooth(true);
+         
+         // Set the position properly - this is crucial
+         setPosition(x, y);
+         
+         // Store the image view in the parent class for reference
+         setTowerImage(towerView);
+         
      } catch (FileNotFoundException e) {
          System.err.println("Tower image not found: " + e.getMessage());
+         
+         // Create a fallback image for testing
+         towerView = new ImageView();
+         towerView.setFitWidth(40);
+         towerView.setFitHeight(40);
      }
-     this.towerView = view;
  }
  
- private void startAnimationTimer() {
+ public  void startAnimationTimer() {
      new AnimationTimer() {
          @Override
          public void handle(long now) {
@@ -94,33 +102,36 @@ private List<bullet> bullets = new ArrayList<>();
      }.start();
  }
 
- private void update(double deltaTime) {
+ public void update(double deltaTime) {
 	
-     if (time > 0) {
+     if (time > 0 ) {
          time -= deltaTime; // Gerçek zamanlı azaltma
      } else {
          shoot();
      }
-     updateBullets(deltaTime);
+     updateBullets(0.1);
  }
+ 
  public void shoot() {
 	 // 1. Zaman sayacını azalt
      // 2. Menzil süresi dolduysa (time<=0) ateş et
      if (time <= 0) {
-         Enemy nearest = null;
-         double minDist = range;
+         ;
 
          // 3. En yakın düşmanı, tower merkezine uzaklığına göre bul
-         double centerX = getTowerx() + 20;
-         double centerY = getTowery() + 20;
-         nearest = closestEnemy(enemies);
-         
-
+         double centerX = getTowerx() ;
+         double centerY = getTowery();
+         ;
+        if(nearest == null) 
+        	nearest= closestEnemy(enemies);
+       // System.out.println(isInRange(nearest));
+        
+        if(nearest!=null) {
          // 4. Eğer menzilde bir hedef varsa, mermi oluşturup ekle
-         if (nearest != null) {
+         if(isInRange(nearest)) {
              try {
                  // Mermi resmi
-                 Image bulletImg = new Image(new FileInputStream("C:\\Users\\Simit\\eclipse-workspace\\TowerDefenceGame\\src\\resources\\bullet4.png"));
+                 Image bulletImg = new Image(new FileInputStream("C:/Users/Simit/eclipse-workspace/TowerDefenceGame/src/resources/bullet4.png"));
                  ImageView bulletView = new ImageView(bulletImg);
                  bulletView.setFitWidth(10);
                  bulletView.setFitHeight(10);
@@ -128,20 +139,32 @@ private List<bullet> bullets = new ArrayList<>();
                  bulletView.setY(centerY);
 
                  // bullet nesnesi
-                 bullet Bullet = new bullet(centerX,centerY,nearest ,damage , 5, this ,bulletView);
+                 bullet Bullet = new bullet(centerX,centerY,nearest ,damage , 30, this ,bulletView);
                  bullets.add(Bullet);  // Mermiyi listeye ekle
                  Bullet.createImage();
+               
                  pane.getChildren().add(bulletView);
                     
-             
+             System.out.println("shot alışıyor");
+             updateBullets(deltaTime);
 
                  // zaman sayacını yeniden yükle
                  time = 1.00/attackSpeed; 
              } catch (FileNotFoundException ex) {
                  System.err.println("Bullet image bulunamadı: " + ex.getMessage());
+                 
              }
+             
          }
+         
+         
+          
+      
      }
+        nearest= closestEnemy(enemies);}
+    
+    	 
+     
  }
  private void updateBullets(double deltaTime) {
      // Mermileri güncelle
