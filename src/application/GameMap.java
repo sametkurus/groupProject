@@ -100,6 +100,38 @@ public class GameMap {
 		}
 	}
 
+	private void updateTowerPositions(double offsetX, double offsetY, double cellSize) {
+		System.out.println("KULE POZİSYONLARI GÜNCELLENİYOR...");
+		for (Towers tower : towers) {
+			// Kuleyi içeren hücreyi bul
+			for (int row = 0; row < height; row++) {
+				for (int col = 0; col < width; col++) {
+					Cell cell = grid[row][col];
+					if (cell.getTower() == tower) {
+						// Güncellenmiş hücre merkezini al
+						double centerX = cell.getCenterX();
+						double centerY = cell.getCenterY();
+
+						// Kule pozisyonunu hücrenin merkezine güncelle
+						tower.setPosition(centerX, centerY);
+
+						// ImageView pozisyonunu ve boyutunu güncelle
+						if (tower.getImageView() != null) {
+							tower.getImageView().setFitWidth(cell.getSize() * 0.8);
+							tower.getImageView().setFitHeight(cell.getSize() * 0.8);
+							tower.getImageView().setLayoutX(centerX - tower.getImageView().getFitWidth() / 2);
+							tower.getImageView().setLayoutY(centerY - tower.getImageView().getFitHeight() / 2);
+						}
+
+						System.out.println("Kule Güncellendi [" + row + "," + col + "]: " + 
+								centerX + "," + centerY);
+						break;
+					}
+				}
+			}
+		}
+	}
+
 	private double calculateCellSize() {
 		// Get the available width and height
 		double availableWidth = mapPane.getWidth();
@@ -175,23 +207,23 @@ public class GameMap {
 
 		cell.setTower(tower);
 
-		// FIX: Position the tower correctly at the center of the cell
+		// Position the tower correctly at the center of the cell
 		double centerX = cell.getCenterX();
 		double centerY = cell.getCenterY();
 		System.out.println("Positioning tower at: " + centerX + "," + centerY + " (cell: " + row + "," + col + ")");
 
 		tower.setPosition(centerX, centerY);
-		
-		// Make sure the tower's image view is properly sized
-	    if (tower.getImageView() != null) {
-	        tower.getImageView().setFitWidth(cell.getSize() * 0.8); // 80% of cell size
-	        tower.getImageView().setFitHeight(cell.getSize() * 0.8);
-	        
-	        // Update the layout coordinates to center the image
-	        tower.getImageView().setLayoutX(centerX - tower.getImageView().getFitWidth() / 2);
-	        tower.getImageView().setLayoutY(centerY - tower.getImageView().getFitHeight() / 2);
-	    }
-	    
+
+		// Make sure the tower's image view is properly sized and centered
+		if (tower.getImageView() != null) {
+			tower.getImageView().setFitWidth(cell.getSize() * 0.8); // 80% of cell size
+			tower.getImageView().setFitHeight(cell.getSize() * 0.8);
+
+			// Center the image on the cell
+			tower.getImageView().setLayoutX(centerX - tower.getImageView().getFitWidth() / 2);
+			tower.getImageView().setLayoutY(centerY - tower.getImageView().getFitHeight() / 2);
+		}
+
 		towers.add(tower);
 
 		// Make sure the tower's image view is added to the pane
@@ -279,21 +311,7 @@ public class GameMap {
 		// ÖNEMLİ DÜZELTME: Yol hücrelerinin pozisyonlarını da güncelle
 		updatePathCellPositions(offsetX, offsetY, cellSize);
 
-		// Add all existing towers back to the pane and update their positions
-		for (Towers tower : towers) {
-			mapPane.getChildren().add(tower.getImageView());
-
-			// Find the cell containing this tower and update tower position
-			for (int row = 0; row < height; row++) {
-				for (int col = 0; col < width; col++) {
-					Cell cell = grid[row][col];
-					if (cell.getTower() == tower) {
-						tower.setPosition(cell.getCenterX(), cell.getCenterY());
-						break;
-					}
-				}
-			}
-		}
+		updateTowerPositions(offsetX, offsetY, cellSize);
 	}
 
 	public void addTower(Towers tower) {
@@ -332,8 +350,20 @@ public class GameMap {
 					for (int col = 0; col < width; col++) {
 						Cell cell = grid[row][col];
 						if (cell.getTower() == tower) {
+							// Get updated cell center
+							double centerX = cell.getCenterX();
+							double centerY = cell.getCenterY();
+
 							// Update tower position to the center of its cell
-							tower.setPosition(cell.getCenterX(), cell.getCenterY());
+							tower.setPosition(centerX, centerY);
+
+							// Update the image view position and size
+							if (tower.getImageView() != null) {
+								tower.getImageView().setFitWidth(cell.getSize() * 0.8);
+								tower.getImageView().setFitHeight(cell.getSize() * 0.8);
+								tower.getImageView().setLayoutX(centerX - tower.getImageView().getFitWidth() / 2);
+								tower.getImageView().setLayoutY(centerY - tower.getImageView().getFitHeight() / 2);
+							}
 							break;
 						}
 					}

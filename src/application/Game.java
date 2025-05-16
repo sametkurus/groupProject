@@ -504,6 +504,13 @@ public class Game extends Application{
 						break;
 					}
 
+					// After tower creation, get the proper cell coordinates
+					double cellCenterX = targetCell.getCenterX();
+					double cellCenterY = targetCell.getCenterY();
+
+					selectedTower.getImageView().setLayoutX(cellCenterX - selectedTower.getImageView().getFitWidth()/2);
+					selectedTower.getImageView().setLayoutY(cellCenterY - selectedTower.getImageView().getFitHeight()/2);
+
 					boolean placed = true;
 					if (placed) {
 						player.setMoney(player.getMoney() - cost);
@@ -519,10 +526,10 @@ public class Game extends Application{
 				}
 				// FIX: Make sure the tower position is calculated correctly
 				// Position the tower image at the center of the cell
-				double centerX = targetCell.getCenterX() - towerView.getFitWidth()/2;
+		/*		double centerX = targetCell.getCenterX() - towerView.getFitWidth()/2;
 				double centerY = targetCell.getCenterY() - towerView.getFitHeight()/2;
 
-
+*/
 				mapPane.getChildren().remove(dragGroup);
 				mapPane.setOnMouseMoved(null);
 				mapPane.setOnMouseClicked(null);
